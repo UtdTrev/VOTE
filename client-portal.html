@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Portal — TrevVote Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a href="index.html" class="brand"><span class="brand-mark">TV</span><span><strong>TrevVote</strong><small>Engine</small></span></a>
+        <nav class="desktop-nav"><a href="index.html">Home</a><a href="contestants.html">Contestants</a><a href="packages.html">Packages</a><a href="leaderboard.html">Results</a><a class="active" href="client-portal.html">Client Portal</a><a href="admin.html">Admin</a></nav>
+        <div class="header-actions"><a class="primary-btn small" href="contestants.html">Public site</a></div>
+      </header>
+
+      <main>
+        <section class="section client-portal-section">
+          <div class="section-heading reveal">
+            <p class="eyebrow-text">Client portal</p>
+            <h2>Upload poll pictures and campaign details.</h2>
+            <p>This is the organiser-facing portal. Clients can update the poll title, description, logo, banner, deadline, visibility, and contestant images without touching code.</p>
+          </div>
+
+          <div class="admin-auth-card reveal" id="adminAuthCard"></div>
+
+          <div id="clientPortal" class="client-portal-grid reveal">
+            <section class="portal-card portal-details-card">
+              <div class="card-head"><h3>Poll details</h3><span>Client editable</span></div>
+              <div class="portal-form-grid">
+                <label><span>Poll title</span><input id="portalTitle" placeholder="Campus Icons Awards 2026" /></label>
+                <label><span>Organiser/client name</span><input id="portalOrganizer" placeholder="Client or event organiser" /></label>
+                <label class="wide"><span>Description</span><textarea id="portalDescription" placeholder="Describe the poll or contest"></textarea></label>
+                <label><span>Voting deadline</span><input id="portalEndsAt" type="datetime-local" /></label>
+                <label><span>Vote price</span><input id="portalVotePrice" type="number" min="50" step="50" /></label>
+                <label><span>Voting status</span><select id="portalStatus"><option value="open">Open</option><option value="paused">Paused</option><option value="closed">Closed</option></select></label>
+                <label><span>Show live results</span><select id="portalShowResults"><option value="true">Yes, show leaderboard</option><option value="false">No, hide leaderboard</option></select></label>
+              </div>
+              <button class="primary-btn" id="saveClientPollBtn" type="button">Save poll details</button>
+            </section>
+
+            <section class="portal-card">
+              <div class="card-head"><h3>Poll pictures</h3><span>Logo + banner</span></div>
+              <div class="portal-upload-grid">
+                <div class="upload-zone">
+                  <div id="pollLogoPreview" class="poll-preview"><span>No logo uploaded</span></div>
+                  <label class="secondary-btn">Upload logo<input id="pollLogoInput" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>
+                </div>
+                <div class="upload-zone wide">
+                  <div id="pollBannerPreview" class="poll-preview banner"><span>No banner uploaded</span></div>
+                  <label class="secondary-btn">Upload banner<input id="pollBannerInput" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>
+                </div>
+              </div>
+            </section>
+
+            <section class="portal-card wide-card">
+              <div class="card-head"><h3>Public poll link</h3><span>Share with voters</span></div>
+              <div class="portal-link-row">
+                <input id="portalPublicLink" readonly />
+                <button class="secondary-btn" id="copyPortalLinkBtn" type="button">Copy link</button>
+              </div>
+            </section>
+
+            <section class="portal-card wide-card">
+              <div class="card-head"><h3>Contestant pictures</h3><span>Upload per contestant</span></div>
+              <div id="portalContestantRows" class="portal-contestant-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><div><strong>TrevVote Engine</strong><p>Client portal.</p></div><div class="footer-links"><a href="contestants.html">Public vote page</a><a href="leaderboard.html">Results</a><a href="admin.html">Admin</a></div></footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

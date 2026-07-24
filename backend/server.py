@@ -95,6 +95,10 @@ def init_db() -> None:
               id text primary key,
               title text not null,
               slug text not null unique,
+              description text,
+              organizer_name text,
+              logo_url text,
+              banner_url text,
               status text not null default 'open',
               vote_price_kobo integer not null default 10000,
               gateway text not null default 'paystack',
@@ -184,6 +188,10 @@ def init_db() -> None:
         )
 
         ensure_column(conn, "contestants", "photo_url", "text")
+        ensure_column(conn, "contests", "description", "text")
+        ensure_column(conn, "contests", "organizer_name", "text")
+        ensure_column(conn, "contests", "logo_url", "text")
+        ensure_column(conn, "contests", "banner_url", "text")
         existing = conn.execute("select count(*) from contests").fetchone()[0]
         if existing == 0:
             seed(conn)
@@ -192,8 +200,8 @@ def init_db() -> None:
 
 def seed(conn: sqlite3.Connection) -> None:
     conn.execute(
-        "insert into contests (id, title, slug, status, vote_price_kobo, gateway, ends_at, show_live_results, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (CONTEST_ID, "Campus Icons Awards 2026", "campus-icons-awards-2026", "open", 10000, GATEWAY, "2026-08-31T22:59:00+01:00", 1, now_iso()),
+        "insert into contests (id, title, slug, description, organizer_name, logo_url, banner_url, status, vote_price_kobo, gateway, ends_at, show_live_results, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (CONTEST_ID, "Campus Icons Awards 2026", "campus-icons-awards-2026", "A premium campus voting campaign powered by verified paid votes.", "TrevVote Demo Client", None, None, "open", 10000, GATEWAY, "2026-08-31T22:59:00+01:00", 1, now_iso()),
     )
     for row in CONTESTANTS:
         conn.execute(
@@ -239,6 +247,10 @@ def contest_payload() -> dict[str, Any]:
     return {
         "settings": {
             "title": contest["title"],
+            "description": contest["description"] if "description" in contest.keys() else None,
+            "organizerName": contest["organizer_name"] if "organizer_name" in contest.keys() else None,
+            "logoUrl": contest["logo_url"] if "logo_url" in contest.keys() else None,
+            "bannerUrl": contest["banner_url"] if "banner_url" in contest.keys() else None,
             "votePrice": ngn_from_kobo(contest["vote_price_kobo"]),
             "gateway": contest["gateway"].capitalize(),
             "status": contest["status"],
@@ -652,6 +664,9 @@ def delete_contestant(contestant_id: str, admin: sqlite3.Row) -> dict[str, Any]:
 
 def update_settings(data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
     title = str(data.get("title") or "").strip() or "Campus Icons Awards 2026"
+    description = str(data.get("description") or "").strip()
+    organizer_name = str(data.get("organizerName") or data.get("organizer_name") or "").strip()
+    ends_at = str(data.get("endsAt") or data.get("ends_at") or "").strip() or None
     vote_price = int(data.get("votePrice") or data.get("vote_price") or 100)
     gateway = str(data.get("gateway") or "paystack").strip().lower()
     status = str(data.get("status") or "open").strip().lower()
@@ -663,15 +678,15 @@ def update_settings(data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
         raise ValueError("Invalid contest status")
     with connect() as conn:
         conn.execute(
-            "update contests set title = ?, vote_price_kobo = ?, gateway = ?, status = ?, show_live_results = ? where id = ?",
-            (title, vote_price * 100, gateway, status, show_live_results, CONTEST_ID),
+            "update contests set title = ?, description = ?, organizer_name = ?, ends_at = ?, vote_price_kobo = ?, gateway = ?, status = ?, show_live_results = ? where id = ?",
+            (title, description, organizer_name, ends_at, vote_price * 100, gateway, status, show_live_results, CONTEST_ID),
         )
-        audit(conn, admin["id"], "contest.settings.update", {"title": title, "votePrice": vote_price, "gateway": gateway, "status": status, "showLiveResults": bool(show_live_results)})
+        audit(conn, admin["id"], "contest.settings.update", {"title": title, "description": description, "organizerName": organizer_name, "endsAt": ends_at, "votePrice": vote_price, "gateway": gateway, "status": status, "showLiveResults": bool(show_live_results)})
     return {"ok": True, "contest": contest_payload()}
 
 
-def save_contestant_photo(contestant_id: str, data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
-    filename = str(data.get("filename") or "photo.jpg").strip().lower()
+def decode_image_upload(data: dict[str, Any]) -> tuple[bytes, str]:
+    filename = str(data.get("filename") or "image.jpg").strip().lower()
     content_type = str(data.get("content_type") or "").strip().lower()
     raw = str(data.get("data") or "")
     if raw.startswith("data:"):
@@ -684,7 +699,7 @@ def save_contestant_photo(contestant_id: str, data: dict[str, Any], admin: sqlit
         suffix = Path(filename).suffix.lower()
         ext = suffix if suffix in {".jpg", ".jpeg", ".png", ".webp"} else None
     if not ext:
-        raise ValueError("Only JPG, PNG and WebP photos are allowed")
+        raise ValueError("Only JPG, PNG and WebP images are allowed")
     if ext == ".jpeg":
         ext = ".jpg"
     try:
@@ -692,7 +707,30 @@ def save_contestant_photo(contestant_id: str, data: dict[str, Any], admin: sqlit
     except Exception as exc:
         raise ValueError("Invalid base64 image data") from exc
     if len(blob) > MAX_PHOTO_BYTES:
-        raise ValueError("Photo is too large")
+        raise ValueError("Image is too large")
+    return blob, ext
+
+
+def save_poll_image(data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
+    kind = str(data.get("kind") or "").strip().lower()
+    if kind not in {"logo", "banner"}:
+        raise ValueError("Image kind must be logo or banner")
+    blob, ext = decode_image_upload(data)
+    with connect() as conn:
+        image_dir = MEDIA_DIR / "polls"
+        image_dir.mkdir(parents=True, exist_ok=True)
+        image_name = f"{CONTEST_ID}_{kind}_{int(time.time())}{ext}"
+        image_path = image_dir / image_name
+        image_path.write_bytes(blob)
+        image_url = f"/media/polls/{image_name}"
+        column = "logo_url" if kind == "logo" else "banner_url"
+        conn.execute(f"update contests set {column} = ? where id = ?", (image_url, CONTEST_ID))
+        audit(conn, admin["id"], "poll.image.upload", {"kind": kind, "url": image_url})
+    return {"ok": True, "imageUrl": image_url, "contest": contest_payload()}
+
+
+def save_contestant_photo(contestant_id: str, data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
+    blob, ext = decode_image_upload(data)
     with connect() as conn:
         contestant = conn.execute("select * from contestants where id = ? and contest_id = ? and is_active = 1", (contestant_id, CONTEST_ID)).fetchone()
         if not contestant:
@@ -851,10 +889,14 @@ class Handler(BaseHTTPRequestHandler):
                 admin = require_admin(self, {"super_admin", "client_admin"})
                 data, _body = read_json(self)
                 return json_response(self, 200, create_contestant(data, admin))
-            if path == "/api/admin/settings":
+            if path == "/api/admin/settings" or path == "/api/client/poll/details":
                 admin = require_admin(self, {"super_admin", "client_admin"})
                 data, _body = read_json(self)
                 return json_response(self, 200, update_settings(data, admin))
+            if path == "/api/client/poll/image":
+                admin = require_admin(self, {"super_admin", "client_admin"})
+                data, _body = read_json(self)
+                return json_response(self, 200, save_poll_image(data, admin))
             if path.startswith("/api/admin/contestants/") and path.endswith("/photo"):
                 admin = require_admin(self, {"super_admin", "client_admin"})
                 contestant_id = urllib.parse.unquote(path.split("/")[4])

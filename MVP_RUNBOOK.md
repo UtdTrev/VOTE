@@ -232,3 +232,35 @@ GET /api/admin/reports/daily.txt
 ```
 
 The admin payments tab also shows a daily report preview that can be copied or opened in WhatsApp.
+
+## Client portal
+
+Added page:
+
+```txt
+client-portal.html
+```
+
+The client portal lets organisers update poll details without touching code:
+
+- Poll title
+- Poll description
+- Organiser/client name
+- Voting deadline
+- Vote price
+- Voting status
+- Show/hide live results
+- Poll logo upload
+- Poll banner upload
+- Contestant photo upload
+- Public poll link copy
+- Contestant WhatsApp/profile links
+
+Added backend endpoints:
+
+```txt
+POST /api/client/poll/details
+POST /api/client/poll/image
+```
+
+Both endpoints require a logged-in admin with `super_admin` or `client_admin` role.

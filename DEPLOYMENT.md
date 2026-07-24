@@ -4,7 +4,7 @@ This repository contains a multi-page MVP website and Python backend for the pai
 
 ## Important
 
-GitHub Pages can host the HTML/CSS/JS pages, but it **cannot run the Python backend**. Paystack initialization, webhooks, admin login, photo upload, and exports require the backend.
+GitHub Pages can host the HTML/CSS/JS pages, but it **cannot run the Python backend**. Paystack initialization, webhooks, admin/client login, photo upload, poll image upload, and exports require the backend.
 
 Best setup:
 
@@ -66,6 +66,8 @@ POST /api/admin/contestants
 DELETE /api/admin/contestants/:id
 POST /api/admin/contestants/:id/photo
 POST /api/admin/settings
+POST /api/client/poll/details
+POST /api/client/poll/image
 GET  /api/admin/reports/summary
 GET  /api/admin/reports/payments.csv
 GET  /api/admin/reports/contestants.csv

@@ -5,18 +5,21 @@ A multi-page, white-label paid voting platform for awards, pageants, contests, s
 ## Pages
 
 ```txt
-index.html           # Landing page
-contestants.html     # Public contestant catalogue and vote modal
-contestant.html?id=  # Shareable contestant profile page
-packages.html        # Vote packages and payment explanation
-leaderboard.html     # Live results / hidden-results message
-admin.html           # Admin login, roles, dashboard, uploads and exports
-payment-success.html # Payment receipt / verification page
+index.html             # Landing page
+contestants.html       # Public contestant catalogue and vote modal
+contestant.html?id=    # Shareable contestant profile page
+packages.html          # Vote packages and payment explanation
+leaderboard.html       # Live results / hidden-results message
+client-portal.html     # Client portal for poll details, poll images, contestant photos
+admin.html             # Admin login, roles, dashboard, uploads and exports
+payment-success.html   # Payment receipt / verification page
 ```
 
 ## Features
 
 - Multi-page public website
+- Client portal for poll details and picture uploads
+- Poll logo and banner upload
 - Shareable contestant profile pages
 - WhatsApp share links for contestants
 - Contestant catalogue/grid

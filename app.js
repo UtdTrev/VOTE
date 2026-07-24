@@ -1,6 +1,11 @@
 const DEFAULT_STATE = {
   settings: {
     title: "Campus Icons Awards 2026",
+    description: "A premium campus voting campaign powered by verified paid votes.",
+    organizerName: "TrevVote Demo Client",
+    logoUrl: null,
+    bannerUrl: null,
+    endsAt: "2026-08-31T22:59:00+01:00",
     votePrice: 100,
     gateway: "Paystack",
     status: "open",
@@ -158,6 +163,7 @@ async function fetchRemoteState({ notify = false } = {}) {
     saveState();
     renderAll();
     renderProfilePage();
+    renderClientPortal();
     if (notify) showToast("Connected to backend database.", "success");
   } catch {
     backendConnected = false;
@@ -418,12 +424,105 @@ function renderAdmin() {
   if ($("#settingShowResults")) $("#settingShowResults").value = state.settings.showLiveResults === false ? "false" : "true";
 }
 
+function renderClientPortal() {
+  const portal = $("#clientPortal");
+  if (!portal) return;
+  const s = state.settings;
+  if ($("#portalTitle")) $("#portalTitle").value = s.title || "";
+  if ($("#portalDescription")) $("#portalDescription").value = s.description || "";
+  if ($("#portalOrganizer")) $("#portalOrganizer").value = s.organizerName || "";
+  if ($("#portalEndsAt")) $("#portalEndsAt").value = s.endsAt ? String(s.endsAt).slice(0, 16) : "";
+  if ($("#portalVotePrice")) $("#portalVotePrice").value = s.votePrice || 100;
+  if ($("#portalStatus")) $("#portalStatus").value = s.status || "open";
+  if ($("#portalShowResults")) $("#portalShowResults").value = s.showLiveResults === false ? "false" : "true";
+  if ($("#pollLogoPreview")) $("#pollLogoPreview").innerHTML = s.logoUrl ? `<img src="${s.logoUrl}" alt="Poll logo">` : `<span>No logo uploaded</span>`;
+  if ($("#pollBannerPreview")) $("#pollBannerPreview").innerHTML = s.bannerUrl ? `<img src="${s.bannerUrl}" alt="Poll banner">` : `<span>No banner uploaded</span>`;
+  if ($("#portalPublicLink")) $("#portalPublicLink").value = new URL("contestants.html", window.location.href).toString();
+
+  if ($("#portalContestantRows")) {
+    $("#portalContestantRows").innerHTML = state.contestants.map((contestant) => `
+      <div class="portal-contestant-row">
+        <div class="portal-contestant-mini">
+          ${contestant.photoUrl ? `<img src="${contestant.photoUrl}" alt="${contestant.name}">` : `<span>${initials(contestant.name)}</span>`}
+          <div><strong>${contestant.name}</strong><small>${contestant.code} • ${contestant.category}</small></div>
+        </div>
+        <div class="portal-row-actions">
+          <a class="ghost-btn" href="contestant.html?id=${encodeURIComponent(contestant.id)}">Profile</a>
+          <a class="ghost-btn" target="_blank" rel="noopener" href="${whatsappShareUrl(contestant)}">WhatsApp</a>
+          <label class="upload-btn">Upload photo<input type="file" accept="image/png,image/jpeg,image/webp" data-portal-photo="${contestant.id}" hidden></label>
+        </div>
+      </div>
+    `).join("");
+    $$(`[data-portal-photo]`).forEach((input) => input.addEventListener("change", () => uploadContestantPhoto(input.dataset.portalPhoto, input.files?.[0])));
+  }
+}
+
+async function saveClientPollDetails() {
+  if (!adminSession?.token) return showToast("Client login required.", "error");
+  const payload = {
+    title: $("#portalTitle")?.value.trim() || state.settings.title,
+    description: $("#portalDescription")?.value.trim() || "",
+    organizerName: $("#portalOrganizer")?.value.trim() || "",
+    endsAt: $("#portalEndsAt")?.value ? new Date($("#portalEndsAt").value).toISOString() : null,
+    votePrice: Number($("#portalVotePrice")?.value || state.settings.votePrice || 100),
+    status: $("#portalStatus")?.value || "open",
+    gateway: state.settings.gateway || "Paystack",
+    showLiveResults: $("#portalShowResults")?.value === "true",
+  };
+  try {
+    const response = await fetch(`${API_BASE}/api/client/poll/details`, {
+      method: "POST",
+      headers: adminHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not save poll details");
+    if (result.contest) state = { ...state, ...result.contest };
+    saveState();
+    renderAll();
+    renderClientPortal();
+    showToast("Poll details saved.", "success");
+  } catch (error) {
+    showToast(`Could not save poll details: ${error.message}`, "error");
+  }
+}
+
+async function uploadPollImage(kind, file) {
+  if (!file) return;
+  if (!adminSession?.token) return showToast("Client login required.", "error");
+  if (!file.type.startsWith("image/")) return showToast("Please choose an image file.", "error");
+  if (file.size > 4 * 1024 * 1024) return showToast("Image must be under 4MB.", "error");
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const response = await fetch(`${API_BASE}/api/client/poll/image`, {
+      method: "POST",
+      headers: adminHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ kind, filename: file.name, content_type: file.type, data: dataUrl }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Upload failed");
+    if (result.contest) state = { ...state, ...result.contest };
+    saveState();
+    renderAll();
+    renderClientPortal();
+    showToast(`${kind === "logo" ? "Logo" : "Banner"} uploaded.`, "success");
+  } catch (error) {
+    showToast(`Image upload failed: ${error.message}`, "error");
+  }
+}
+
 function renderAll() {
   renderHeroAndMetrics();
   renderPackages();
   renderContestants();
   renderLeaderboard();
   renderAdmin();
+  renderClientPortal();
   updateSummary();
 }
 
@@ -615,6 +714,9 @@ async function saveSettings() {
   if (!votePrice || votePrice < 50) return showToast("Vote price should be at least ₦50.", "error");
   const payload = {
     title: $("#settingTitle").value.trim() || DEFAULT_STATE.settings.title,
+    description: state.settings.description || "",
+    organizerName: state.settings.organizerName || "",
+    endsAt: state.settings.endsAt || null,
     votePrice,
     gateway: $("#settingGateway").value,
     status: $("#settingStatus").value,
@@ -660,6 +762,13 @@ function wireEvents() {
   $("#voteForm")?.addEventListener("submit", processPayment);
   $("#addContestantBtn")?.addEventListener("click", addContestant);
   $("#saveSettingsBtn")?.addEventListener("click", saveSettings);
+  $("#saveClientPollBtn")?.addEventListener("click", saveClientPollDetails);
+  $("#pollLogoInput")?.addEventListener("change", (event) => uploadPollImage("logo", event.target.files?.[0]));
+  $("#pollBannerInput")?.addEventListener("change", (event) => uploadPollImage("banner", event.target.files?.[0]));
+  $("#copyPortalLinkBtn")?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#portalPublicLink")?.value || window.location.href); showToast("Public poll link copied.", "success"); }
+    catch { showToast("Could not copy link.", "error"); }
+  });
   $("#copyDailyReportBtn")?.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(generateDailyReportText()); showToast("Daily report copied.", "success"); }
     catch { showToast("Could not copy report.", "error"); }
@@ -680,4 +789,5 @@ function wireEvents() {
 wireEvents();
 renderAll();
 renderProfilePage();
+renderClientPortal();
 fetchRemoteState();
