@@ -32,7 +32,7 @@
           <form class="vote-form" id="voteForm">
             <p class="eyebrow-text">Buy votes</p>
             <h2 id="modalContestantName">Contestant</h2>
-            <p class="form-hint">Choose a package. The backend initializes Paystack and credits votes only after verification.</p>
+            <p class="form-hint">Choose a package, transfer the exact amount, then submit your reference for admin verification.</p>
             <div class="modal-packages" id="modalPackages"></div>
             <div class="custom-votes"><label><span>Or enter custom votes</span><input id="customVotes" type="number" min="1" step="1" placeholder="e.g. 250" /></label><button class="secondary-btn" type="button" id="applyCustomVotes">Apply</button></div>
             <div class="buyer-grid">
@@ -40,15 +40,15 @@
               <label><span>Email</span><input id="buyerEmail" name="email" type="email" placeholder="ada@example.com" autocomplete="email" /></label>
               <label><span>Phone</span><input id="buyerPhone" name="phone" type="tel" placeholder="08012345678" autocomplete="tel" /></label>
             </div>
-            <div class="summary-box"><div><span>Votes</span><strong id="summaryVotes">0</strong></div><div><span>Amount</span><strong id="summaryAmount">₦0</strong></div><div><span>Gateway</span><strong id="summaryGateway">Paystack</strong></div></div>
+            <div class="summary-box"><div><span>Votes</span><strong id="summaryVotes">0</strong></div><div><span>Amount</span><strong id="summaryAmount">₦0</strong></div><div><span>Gateway</span><strong id="summaryGateway">Bank Transfer</strong></div></div>
             <label class="terms-row"><input id="termsCheckbox" type="checkbox" /><span>I understand that votes are credited only after successful payment verification.</span></label>
-            <button class="primary-btn full" type="submit">Pay with Paystack</button>
+            <button class="primary-btn full" type="submit">Submit transfer details</button>
           </form>
         </div>
       </div>
     </div>
 
-    <div class="modal-backdrop processing-backdrop" id="processingModal" aria-hidden="true"><div class="processing-card"><div class="loader-ring"></div><h2 id="processingTitle">Initializing secure checkout...</h2><p id="processingText">Creating payment reference.</p></div></div>
+    <div class="modal-backdrop processing-backdrop" id="processingModal" aria-hidden="true"><div class="processing-card"><div class="loader-ring"></div><h2 id="processingTitle">Submitting registration...</h2><p id="processingText">Saving transfer details.</p></div></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="config.js"></script>
     <script src="app.js"></script>

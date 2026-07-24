@@ -7,7 +7,14 @@ const DEFAULT_STATE = {
     bannerUrl: null,
     endsAt: "2026-08-31T22:59:00+01:00",
     votePrice: 100,
-    gateway: "Paystack",
+    gateway: "Bank Transfer",
+    paymentMethod: "manual_transfer",
+    bankDetails: {
+      bank: "OPAY",
+      accountName: "DANIEL GBENGA OLUTIMEHIN",
+      accountNumber: "6109478874",
+      instructions: "Transfer the exact package amount. Keep your receipt or transaction reference until your votes are verified.",
+    },
     status: "open",
     showLiveResults: true,
   },
@@ -164,6 +171,7 @@ async function fetchRemoteState({ notify = false } = {}) {
     renderAll();
     renderProfilePage();
     renderClientPortal();
+    renderManualPaymentPage();
     if (notify) showToast("Connected to backend database.", "success");
   } catch {
     backendConnected = false;
@@ -209,9 +217,7 @@ function renderPackages() {
       selectedPackage = pkg;
       selectedVotes = pkg.votes;
       selectedAmount = pkg.amount;
-      const firstContestant = sortedContestants("rank")[0];
-      if ($("#voteModal")) openVoteModal(firstContestant.id);
-      else window.location.href = "contestants.html";
+      window.location.href = `payment.html?package_id=${encodeURIComponent(pkg.id)}`;
     });
   });
 }
@@ -252,7 +258,7 @@ function renderContestants() {
         <div class="vote-line"><span>${contestant.region}</span><strong>${formatNumber(contestant.votes)}</strong></div>
         <div class="progress-track"><div class="progress-bar" style="width: ${Math.max(8, (contestant.votes / maxVotes) * 100)}%"></div></div>
         <div class="card-actions">
-          <button class="primary-btn" type="button" data-vote="${contestant.id}">Vote for ${contestant.name.split(" ")[0]}</button>
+          <a class="primary-btn" href="payment.html?contestant_id=${encodeURIComponent(contestant.id)}">Vote for ${contestant.name.split(" ")[0]}</a>
           <a class="secondary-btn" href="contestant.html?id=${encodeURIComponent(contestant.id)}">Profile</a>
           <a class="ghost-btn" target="_blank" rel="noopener" href="${whatsappShareUrl(contestant)}">WhatsApp</a>
         </div>
@@ -313,7 +319,7 @@ function renderProfilePage() {
           <div><span>Category</span><strong>${contestant.category}</strong></div>
         </div>
         <div class="profile-actions">
-          <button class="primary-btn" type="button" data-vote="${contestant.id}">Vote for ${contestant.name.split(" ")[0]}</button>
+          <a class="primary-btn" href="payment.html?contestant_id=${encodeURIComponent(contestant.id)}">Vote for ${contestant.name.split(" ")[0]}</a>
           <a class="secondary-btn" target="_blank" rel="noopener" href="${whatsappShareUrl(contestant)}">Share on WhatsApp</a>
           <button class="ghost-btn" type="button" id="copyProfileLink">Copy link</button>
         </div>
@@ -413,8 +419,11 @@ function renderAdmin() {
     const paymentRows = [...state.payments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 12);
     $("#paymentRows").innerHTML = paymentRows.length ? paymentRows.map((payment) => {
       const contestant = getContestant(payment.contestantId);
-      return `<tr><td><strong>${payment.reference}</strong></td><td>${payment.voter}<br><span>${payment.phone || payment.email || "—"}</span></td><td>${contestant ? contestant.name : "Deleted contestant"}</td><td>${formatNumber(payment.votes)}</td><td><strong>${formatCurrency(payment.amount)}</strong></td><td><span class="status-pill">${payment.status}</span></td></tr>`;
-    }).join("") : `<tr><td colspan="6">No payments yet.</td></tr>`;
+      const isPending = payment.status === "pending";
+      return `<tr><td><strong>${payment.reference}</strong></td><td>${payment.voter}<br><span>${payment.phone || payment.email || "—"}</span></td><td>${contestant ? contestant.name : "Deleted contestant"}</td><td>${formatNumber(payment.votes)}</td><td><strong>${formatCurrency(payment.amount)}</strong></td><td><span class="status-pill ${isPending ? "pending" : ""}">${payment.status}</span></td><td>${isPending ? `<button class="upload-btn" data-verify-payment="${payment.reference}">Verify</button> <button class="delete-btn" data-reject-payment="${payment.reference}">Reject</button>` : "—"}</td></tr>`;
+    }).join("") : `<tr><td colspan="7">No payments yet.</td></tr>`;
+    $$(`[data-verify-payment]`).forEach((button) => button.addEventListener("click", () => verifyManualPayment(button.dataset.verifyPayment)));
+    $$(`[data-reject-payment]`).forEach((button) => button.addEventListener("click", () => rejectManualPayment(button.dataset.rejectPayment)));
   }
 
   if ($("#settingTitle")) $("#settingTitle").value = state.settings.title;
@@ -422,6 +431,91 @@ function renderAdmin() {
   if ($("#settingGateway")) $("#settingGateway").value = state.settings.gateway;
   if ($("#settingStatus")) $("#settingStatus").value = state.settings.status;
   if ($("#settingShowResults")) $("#settingShowResults").value = state.settings.showLiveResults === false ? "false" : "true";
+}
+
+function getSelectedManualContestant() {
+  return getContestant($("#manualContestant")?.value) || sortedContestants("rank")[0];
+}
+
+function getSelectedManualPackage() {
+  return getPackages().find((pkg) => pkg.id === $("#manualPackage")?.value) || getPackages()[1] || getPackages()[0];
+}
+
+function renderManualPaymentPage() {
+  const page = $("#manualPaymentPage");
+  if (!page) return;
+  const params = new URLSearchParams(window.location.search);
+  const contestantId = params.get("contestant_id") || params.get("contestant") || sortedContestants("rank")[0]?.id;
+  const packageId = params.get("package_id") || params.get("package") || getPackages()[1]?.id || getPackages()[0]?.id;
+  const bank = state.settings.bankDetails || DEFAULT_STATE.settings.bankDetails;
+
+  if ($("#manualContestant")) {
+    $("#manualContestant").innerHTML = state.contestants.map((c) => `<option value="${c.id}">${c.name} — ${c.code}</option>`).join("");
+    $("#manualContestant").value = state.contestants.some((c) => c.id === contestantId) ? contestantId : state.contestants[0]?.id;
+  }
+  if ($("#manualPackage")) {
+    $("#manualPackage").innerHTML = getPackages().map((pkg) => `<option value="${pkg.id}">${pkg.name} — ${formatCurrency(pkg.amount)}</option>`).join("");
+    $("#manualPackage").value = getPackages().some((p) => p.id === packageId) ? packageId : getPackages()[0]?.id;
+  }
+  if ($("#bankName")) $("#bankName").textContent = bank.bank;
+  if ($("#bankAccountName")) $("#bankAccountName").textContent = bank.accountName;
+  if ($("#bankAccountNumber")) $("#bankAccountNumber").textContent = bank.accountNumber;
+  if ($("#bankInstructions")) $("#bankInstructions").textContent = bank.instructions;
+  updateManualPaymentSummary();
+}
+
+function updateManualPaymentSummary() {
+  if (!$("#manualPaymentPage")) return;
+  const contestant = getSelectedManualContestant();
+  const pkg = getSelectedManualPackage();
+  if (!contestant || !pkg) return;
+  if ($("#selectedPackageName")) $("#selectedPackageName").textContent = `${pkg.name} Package`;
+  if ($("#selectedPackageAmount")) $("#selectedPackageAmount").textContent = formatCurrency(pkg.amount);
+  if ($("#selectedPackageVotes")) $("#selectedPackageVotes").textContent = `${formatNumber(pkg.votes)} votes for ${contestant.name}`;
+  if ($("#amountDue")) $("#amountDue").textContent = formatCurrency(pkg.amount);
+  if ($("#manualContestantPreview")) {
+    $("#manualContestantPreview").innerHTML = `
+      <div class="manual-contestant-preview-card" style="--contestant-gradient:${contestant.gradient}">
+        ${contestant.photoUrl ? `<img src="${contestant.photoUrl}" alt="${contestant.name}">` : `<span>${initials(contestant.name)}</span>`}
+        <div><strong>${contestant.name}</strong><small>${contestant.code} • ${contestant.category}</small></div>
+      </div>`;
+  }
+}
+
+async function submitManualPayment(event) {
+  event.preventDefault();
+  const contestant = getSelectedManualContestant();
+  const pkg = getSelectedManualPackage();
+  const accepted = $("#manualConfirm")?.checked;
+  const payload = {
+    contestant_id: contestant?.id,
+    package_id: pkg?.id,
+    votes: pkg?.votes,
+    voter_name: $("#manualFullName")?.value.trim(),
+    country: $("#manualCountry")?.value.trim() || "Nigeria",
+    voter_email: $("#manualEmail")?.value.trim() || null,
+    voter_phone: $("#manualWhatsapp")?.value.trim() || null,
+    transfer_reference: $("#manualTransferReference")?.value.trim(),
+  };
+  if (!payload.voter_name) return showToast("Enter your full name.", "error");
+  if (!payload.voter_email && !payload.voter_phone) return showToast("Enter email or WhatsApp number.", "error");
+  if (!payload.transfer_reference) return showToast("Enter transfer reference or sender account name.", "error");
+  if (!accepted) return showToast("Please confirm your details are correct.", "error");
+
+  showProcessing("Submitting registration...", "Saving your bank transfer details for verification.");
+  try {
+    const response = await fetch(`${API_BASE}/api/payments/manual-submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not submit registration");
+    window.location.href = `payment-success.html?reference=${encodeURIComponent(result.reference)}&manual=1`;
+  } catch (error) {
+    hideProcessing();
+    showToast(`Submission failed: ${error.message}`, "error");
+  }
 }
 
 function renderClientPortal() {
@@ -466,7 +560,7 @@ async function saveClientPollDetails() {
     endsAt: $("#portalEndsAt")?.value ? new Date($("#portalEndsAt").value).toISOString() : null,
     votePrice: Number($("#portalVotePrice")?.value || state.settings.votePrice || 100),
     status: $("#portalStatus")?.value || "open",
-    gateway: state.settings.gateway || "Paystack",
+    gateway: state.settings.gateway || "Bank Transfer",
     showLiveResults: $("#portalShowResults")?.value === "true",
   };
   try {
@@ -523,6 +617,7 @@ function renderAll() {
   renderLeaderboard();
   renderAdmin();
   renderClientPortal();
+  renderManualPaymentPage();
   updateSummary();
 }
 
@@ -595,34 +690,14 @@ function showProcessing(title, text) {
 }
 function hideProcessing() { $("#processingModal")?.classList.remove("active"); }
 
-async function processPayment(event) {
+function processPayment(event) {
   event.preventDefault();
-  const contestant = getContestant(selectedContestantId);
-  if (!contestant) return showToast("Please select a contestant first.", "error");
-  const voter = $("#buyerName").value.trim();
-  const email = $("#buyerEmail").value.trim();
-  const phone = $("#buyerPhone").value.trim();
-  const accepted = $("#termsCheckbox").checked;
-  if (!voter) return showToast("Enter your name before payment.", "error");
-  if (!email && !phone) return showToast("Enter email or phone for the receipt.", "error");
-  if (!selectedVotes || selectedVotes < 1) return showToast("Choose a vote package.", "error");
-  if (!accepted) return showToast("Please accept the payment verification note.", "error");
-  closeVoteModal();
-  showProcessing("Initializing secure checkout...", "Creating backend payment reference.");
-  try {
-    const response = await fetch(`${API_BASE}/api/payments/initialize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contest_id: "campus-icons-2026", contestant_id: contestant.id, package_id: selectedPackage ? selectedPackage.id : null, votes: selectedVotes, voter_name: voter, voter_email: email || null, voter_phone: phone || null }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "Payment initialization failed");
-    showProcessing(result.dev_mode ? "Local dev checkout ready" : "Redirecting to Paystack...", result.dev_mode ? "No Paystack key detected, using backend simulation." : "Paystack will verify and return after payment.");
-    setTimeout(() => { window.location.href = result.authorization_url; }, 650);
-  } catch (error) {
-    hideProcessing();
-    showToast(`Backend payment failed: ${error.message}`, "error");
-  }
+  const contestant = getContestant(selectedContestantId) || sortedContestants("rank")[0];
+  const pkg = selectedPackage || getPackages()[1] || getPackages()[0];
+  const url = new URL("payment.html", window.location.href);
+  if (contestant) url.searchParams.set("contestant_id", contestant.id);
+  if (pkg) url.searchParams.set("package_id", pkg.id);
+  window.location.href = url.toString();
 }
 
 async function handleAdminLogin(event) {
@@ -658,6 +733,44 @@ async function downloadReport(endpoint, filename) {
     const a = document.createElement("a");
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   } catch (error) { showToast(`Export failed: ${error.message}`, "error"); }
+}
+
+async function verifyManualPayment(reference) {
+  if (!adminSession?.token) return showToast("Admin login required.", "error");
+  if (!confirm(`Verify transfer and credit votes for ${reference}?`)) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/payments/${encodeURIComponent(reference)}/verify`, {
+      method: "POST",
+      headers: adminHeaders(),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not verify payment");
+    if (result.contest) state = { ...state, ...result.contest };
+    saveState();
+    renderAll();
+    showToast("Payment verified and votes credited.", "success");
+  } catch (error) {
+    showToast(`Verification failed: ${error.message}`, "error");
+  }
+}
+
+async function rejectManualPayment(reference) {
+  if (!adminSession?.token) return showToast("Admin login required.", "error");
+  if (!confirm(`Reject this transfer submission: ${reference}?`)) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/payments/${encodeURIComponent(reference)}/reject`, {
+      method: "POST",
+      headers: adminHeaders(),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not reject payment");
+    if (result.contest) state = { ...state, ...result.contest };
+    saveState();
+    renderAll();
+    showToast("Payment submission rejected.", "success");
+  } catch (error) {
+    showToast(`Reject failed: ${error.message}`, "error");
+  }
 }
 
 async function addContestant() {
@@ -761,6 +874,13 @@ function wireEvents() {
   $("#customVotes")?.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applyCustomVotes(); } });
   $("#voteForm")?.addEventListener("submit", processPayment);
   $("#addContestantBtn")?.addEventListener("click", addContestant);
+  $("#manualPackage")?.addEventListener("change", updateManualPaymentSummary);
+  $("#manualContestant")?.addEventListener("change", updateManualPaymentSummary);
+  $("#manualPaymentForm")?.addEventListener("submit", submitManualPayment);
+  $("#copyBankAccountBtn")?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText((state.settings.bankDetails || DEFAULT_STATE.settings.bankDetails).accountNumber); showToast("Account number copied.", "success"); }
+    catch { showToast("Could not copy account number.", "error"); }
+  });
   $("#saveSettingsBtn")?.addEventListener("click", saveSettings);
   $("#saveClientPollBtn")?.addEventListener("click", saveClientPollDetails);
   $("#pollLogoInput")?.addEventListener("change", (event) => uploadPollImage("logo", event.target.files?.[0]));
@@ -790,4 +910,5 @@ wireEvents();
 renderAll();
 renderProfilePage();
 renderClientPortal();
+renderManualPaymentPage();
 fetchRemoteState();

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bank Transfer Payment — TrevVote Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a href="index.html" class="brand"><span class="brand-mark">TV</span><span><strong>TrevVote</strong><small>Engine</small></span></a>
+        <nav class="desktop-nav"><a href="index.html">Home</a><a href="contestants.html">Contestants</a><a href="packages.html">Packages</a><a href="leaderboard.html">Results</a><a href="client-portal.html">Client Portal</a><a href="admin.html">Admin</a></nav>
+        <div class="header-actions"><a class="ghost-btn" href="contestants.html">Change contestant</a><a class="primary-btn small" href="packages.html">Packages</a></div>
+      </header>
+
+      <main id="manualPaymentPage" class="manual-payment-page">
+        <section class="manual-payment-layout">
+          <aside class="manual-payment-left">
+            <div class="selected-package-card">
+              <p>Selected package</p>
+              <h2 id="selectedPackageName">Package</h2>
+              <strong id="selectedPackageAmount">₦0</strong>
+              <span id="selectedPackageVotes">0 votes</span>
+              <a href="packages.html">Compare all packages →</a>
+            </div>
+
+            <div class="bank-card">
+              <p class="bank-title"><span></span> Bank-transfer details</p>
+              <div class="bank-row"><span>Bank</span><strong id="bankName">OPAY</strong></div>
+              <div class="bank-row"><span>Account name</span><strong id="bankAccountName">—</strong></div>
+              <div class="bank-row"><span>Account number</span><strong><span id="bankAccountNumber">—</span> <button id="copyBankAccountBtn" type="button">Copy</button></strong></div>
+              <div class="bank-row"><span>Amount due</span><strong id="amountDue">₦0</strong></div>
+              <p id="bankInstructions" class="bank-note">Transfer the exact package amount. Keep your receipt.</p>
+            </div>
+
+            <div class="steps-list">
+              <div><span>1</span><strong>Choose contestant/package</strong><small>Select who you are voting for.</small></div>
+              <div><span>2</span><strong>Make the transfer</strong><small>Pay the exact amount to the account shown.</small></div>
+              <div><span>3</span><strong>Submit details</strong><small>Enter your contact and transfer reference.</small></div>
+              <div><span>4</span><strong>Receive vote credit</strong><small>Admin verifies and credits your votes.</small></div>
+            </div>
+          </aside>
+
+          <section class="manual-payment-form-card">
+            <p class="eyebrow-text">Voter details</p>
+            <h1>Complete your vote registration</h1>
+            <p>Use an email and WhatsApp number you can access. Your payment receipt or transfer reference helps us verify your votes.</p>
+
+            <div id="manualContestantPreview"></div>
+
+            <form id="manualPaymentForm">
+              <div class="portal-form-grid">
+                <label class="wide"><span>Contestant</span><select id="manualContestant"></select></label>
+                <label class="wide"><span>Package</span><select id="manualPackage"></select></label>
+                <label><span>Full name</span><input id="manualFullName" placeholder="Your full name" autocomplete="name" /></label>
+                <label><span>Country</span><input id="manualCountry" value="Nigeria" /></label>
+                <label><span>Email address</span><input id="manualEmail" type="email" placeholder="you@example.com" autocomplete="email" /></label>
+                <label><span>WhatsApp number</span><input id="manualWhatsapp" type="tel" placeholder="+234 801 234 5678" autocomplete="tel" /></label>
+                <label class="wide"><span>Transfer reference or sender account name</span><input id="manualTransferReference" placeholder="Example: OPay transaction ID or sender name" /></label>
+              </div>
+              <p class="bank-note">This is used only to match your bank transfer with your vote registration.</p>
+              <label class="terms-row"><input id="manualConfirm" type="checkbox" /><span>I confirm that the details are correct and I transferred the exact amount.</span></label>
+              <button class="primary-btn full" type="submit">Submit Registration →</button>
+              <p class="bank-note center">Submitting does not instantly credit votes. Admin must verify the bank transfer first.</p>
+            </form>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop processing-backdrop" id="processingModal" aria-hidden="true"><div class="processing-card"><div class="loader-ring"></div><h2 id="processingTitle">Submitting registration...</h2><p id="processingText">Saving transfer details.</p></div></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

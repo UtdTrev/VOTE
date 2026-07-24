@@ -8,13 +8,17 @@ services:
     envVars:
       - key: HOST
         value: 0.0.0.0
-      - key: ALLOW_DEV_PAYMENTS
-        value: 0
       - key: PAYMENT_GATEWAY
-        value: paystack
+        value: manual_transfer
       - key: FRONTEND_URL
         sync: false
-      - key: PAYSTACK_SECRET_KEY
+      - key: BANK_NAME
+        sync: false
+      - key: BANK_ACCOUNT_NAME
+        sync: false
+      - key: BANK_ACCOUNT_NUMBER
+        sync: false
+      - key: PAYMENT_INSTRUCTIONS
         sync: false
       - key: ADMIN_EMAIL
         sync: false

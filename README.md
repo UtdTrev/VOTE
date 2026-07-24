@@ -1,39 +1,39 @@
 # TrevVote Engine MVP
 
-A multi-page, white-label paid voting platform for awards, pageants, contests, schools, creators, and events.
+A multi-page, white-label paid voting platform using the same **manual bank-transfer payment option** as the Trev AI screenshot.
 
 ## Pages
 
 ```txt
 index.html             # Landing page
-contestants.html       # Public contestant catalogue and vote modal
+contestants.html       # Public contestant catalogue
 contestant.html?id=    # Shareable contestant profile page
-packages.html          # Vote packages and payment explanation
-leaderboard.html       # Live results / hidden-results message
-client-portal.html     # Client portal for poll details, poll images, contestant photos
-admin.html             # Admin login, roles, dashboard, uploads and exports
-payment-success.html   # Payment receipt / verification page
+packages.html          # Vote packages
+payment.html           # Manual bank-transfer registration page
+leaderboard.html       # Live/hidden results
+client-portal.html     # Client portal for poll details and images
+admin.html             # Admin verification, roles, reports and uploads
+payment-success.html   # Transfer submission receipt / verification status
 ```
 
-## Features
+## Payment flow
 
-- Multi-page public website
-- Client portal for poll details and picture uploads
-- Poll logo and banner upload
-- Shareable contestant profile pages
-- WhatsApp share links for contestants
-- Contestant catalogue/grid
-- Vote packages and custom votes
-- Same Paystack-style payment flow as Trev AI
-- Backend payment initialization
-- Paystack webhook verification
-- Vote crediting with duplicate protection
-- Hidden/show leaderboard option
-- Polished payment receipt page
-- Admin login and role display
-- Contestant photo uploads
-- CSV reporting exports
-- Daily report text for email/WhatsApp
+1. Voter chooses contestant/package.
+2. Voter goes to `payment.html`.
+3. Voter transfers exact amount to the displayed bank account.
+4. Voter submits full name, email/WhatsApp, and transfer reference/sender name.
+5. Admin verifies the transfer in `admin.html`.
+6. Votes are credited only after admin approval.
+
+## Default bank details
+
+Configured in `backend/.env.example`:
+
+```txt
+BANK_NAME=OPAY
+BANK_ACCOUNT_NAME=DANIEL GBENGA OLUTIMEHIN
+BANK_ACCOUNT_NUMBER=6109478874
+```
 
 ## Quick start
 
@@ -54,15 +54,4 @@ admin@trevvote.local
 admin12345
 ```
 
-## Paystack test/live mode
-
-```bash
-export PAYSTACK_SECRET_KEY=sk_test_xxx
-export FRONTEND_URL=http://127.0.0.1:8000
-export ALLOW_DEV_PAYMENTS=0
-python backend/server.py
-```
-
-## Deploy
-
-See `DEPLOYMENT.md`.
+Change admin and bank details with environment variables before deployment.

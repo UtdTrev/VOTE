@@ -111,11 +111,11 @@
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || "Could not verify payment");
 
-          const successful = result.status === "successful";
-          document.getElementById("title").textContent = successful ? "Votes credited." : "Payment pending.";
+          const successful = result.status === "successful" || result.status === "verified";
+          document.getElementById("title").textContent = successful ? "Votes credited." : "Verification pending.";
           document.getElementById("message").textContent = successful
-            ? "Your payment has been verified and the votes have been added."
-            : "The backend has not received a successful gateway confirmation yet. You can try again shortly.";
+            ? "Your bank transfer has been verified and the votes have been added."
+            : "Your transfer details have been submitted. Admin will verify the bank transfer before votes are credited.";
           document.getElementById("status").textContent = result.status || "pending";
           document.getElementById("contestant").textContent = result.contestant || "—";
           document.getElementById("votes").textContent = result.votes ? new Intl.NumberFormat("en-NG").format(result.votes) : "—";
@@ -123,7 +123,7 @@
           const dateValue = result.processedAt || result.createdAt;
           document.getElementById("dateTime").textContent = dateValue ? new Date(dateValue).toLocaleString("en-NG") : "—";
           document.getElementById("voter").textContent = result.voter || "—";
-          document.getElementById("gateway").textContent = result.gateway || "Paystack";
+          document.getElementById("gateway").textContent = result.gateway || "Bank Transfer";
         } catch (error) {
           document.getElementById("title").textContent = "Verification failed";
           document.getElementById("message").textContent = error.message;

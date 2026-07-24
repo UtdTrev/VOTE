@@ -41,9 +41,13 @@ HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8000"))
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY", "").strip()
 PAYSTACK_BASE_URL = os.getenv("PAYSTACK_BASE_URL", "https://api.paystack.co").rstrip("/")
-GATEWAY = os.getenv("PAYMENT_GATEWAY", "paystack")
+GATEWAY = os.getenv("PAYMENT_GATEWAY", "manual_transfer")
 ALLOW_DEV_PAYMENTS = os.getenv("ALLOW_DEV_PAYMENTS", "1") == "1"
 FRONTEND_URL = os.getenv("FRONTEND_URL", f"http://{HOST}:{PORT}").rstrip("/")
+BANK_NAME = os.getenv("BANK_NAME", "OPAY")
+BANK_ACCOUNT_NAME = os.getenv("BANK_ACCOUNT_NAME", "DANIEL GBENGA OLUTIMEHIN")
+BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "6109478874")
+PAYMENT_INSTRUCTIONS = os.getenv("PAYMENT_INSTRUCTIONS", "Transfer the exact package amount. Keep your receipt or transaction reference until your votes are verified.")
 MEDIA_DIR = ROOT / "media"
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@trevvote.local").strip().lower()
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin12345").strip()
@@ -229,6 +233,11 @@ def ngn_from_kobo(kobo: int) -> int:
     return int(kobo // 100)
 
 
+def gateway_label(gateway: str | None) -> str:
+    labels = {"manual_transfer": "Bank Transfer", "paystack": "Paystack", "flutterwave": "Flutterwave", "monnify": "Monnify"}
+    return labels.get((gateway or "").lower(), (gateway or "manual_transfer").replace("_", " ").title())
+
+
 def make_reference() -> str:
     return f"TVE-{int(time.time())}-{secrets.token_hex(4).upper()}"
 
@@ -252,7 +261,14 @@ def contest_payload() -> dict[str, Any]:
             "logoUrl": contest["logo_url"] if "logo_url" in contest.keys() else None,
             "bannerUrl": contest["banner_url"] if "banner_url" in contest.keys() else None,
             "votePrice": ngn_from_kobo(contest["vote_price_kobo"]),
-            "gateway": contest["gateway"].capitalize(),
+            "gateway": gateway_label(contest["gateway"]),
+            "paymentMethod": contest["gateway"],
+            "bankDetails": {
+                "bank": BANK_NAME,
+                "accountName": BANK_ACCOUNT_NAME,
+                "accountNumber": BANK_ACCOUNT_NUMBER,
+                "instructions": PAYMENT_INSTRUCTIONS,
+            },
             "status": contest["status"],
             "endsAt": contest["ends_at"],
             "showLiveResults": bool(contest["show_live_results"]),
@@ -385,7 +401,7 @@ def process_successful_payment(reference: str, gateway_payload: dict[str, Any] |
                 "voter": payment["voter_name"],
                 "email": payment["voter_email"],
                 "phone": payment["voter_phone"],
-                "gateway": payment["gateway"],
+                "gateway": gateway_label(payment["gateway"]),
             }
 
         gateway_amount = int(gateway_payload.get("amount") or payment["amount_kobo"])
@@ -421,7 +437,7 @@ def process_successful_payment(reference: str, gateway_payload: dict[str, Any] |
             "voter": payment["voter_name"],
             "email": payment["voter_email"],
             "phone": payment["voter_phone"],
-            "gateway": payment["gateway"],
+            "gateway": gateway_label(payment["gateway"]),
         }
 
 
@@ -506,6 +522,93 @@ def initialize_payment(data: dict[str, Any]) -> dict[str, Any]:
         conn.execute("update payments set authorization_url = ? where reference = ?", (authorization_url, reference))
     return {"reference": reference, "authorization_url": authorization_url, "access_code": access_code, "dev_mode": False}
 
+
+def payment_payload(reference: str) -> dict[str, Any]:
+    with connect() as conn:
+        payment = conn.execute(
+            """
+            select payments.*, contestants.name as contestant_name, contestants.code as contestant_code
+            from payments
+            left join contestants on contestants.id = payments.contestant_id
+            where payments.reference = ?
+            """,
+            (reference,),
+        ).fetchone()
+    if not payment:
+        raise ValueError("Payment reference not found")
+    return {
+        "reference": reference,
+        "status": "verified" if payment["status"] == "successful" else payment["status"],
+        "contestant": payment["contestant_name"],
+        "contestantCode": payment["contestant_code"],
+        "votes": payment["votes_purchased"],
+        "amount": ngn_from_kobo(payment["amount_kobo"]),
+        "createdAt": payment["created_at"],
+        "processedAt": payment["processed_at"],
+        "voter": payment["voter_name"],
+        "email": payment["voter_email"],
+        "phone": payment["voter_phone"],
+        "gateway": gateway_label(payment["gateway"]),
+    }
+
+
+def submit_manual_payment(data: dict[str, Any]) -> dict[str, Any]:
+    contestant_id = str(data.get("contestant_id") or "").strip()
+    package_id = data.get("package_id")
+    package_id = str(package_id).strip() if package_id else None
+    voter_name = str(data.get("voter_name") or "").strip()
+    voter_email = str(data.get("voter_email") or "").strip() or None
+    voter_phone = str(data.get("voter_phone") or "").strip() or None
+    country = str(data.get("country") or "Nigeria").strip() or "Nigeria"
+    transfer_reference = str(data.get("transfer_reference") or "").strip()
+    requested_votes = int(data.get("votes") or 0)
+
+    if not contestant_id:
+        raise ValueError("contestant_id is required")
+    if not voter_name:
+        raise ValueError("Full name is required")
+    if not voter_email and not voter_phone:
+        raise ValueError("Email or WhatsApp number is required")
+    if not transfer_reference:
+        raise ValueError("Transfer reference or sender account name is required")
+
+    with connect() as conn:
+        contest = conn.execute("select * from contests where id = ?", (CONTEST_ID,)).fetchone()
+        if not contest or contest["status"] != "open":
+            raise ValueError("Voting is not open for this contest")
+        contestant = conn.execute("select * from contestants where id = ? and contest_id = ? and is_active = 1", (contestant_id, CONTEST_ID)).fetchone()
+        if not contestant:
+            raise ValueError("Contestant not found or inactive")
+        if package_id:
+            package = conn.execute("select * from vote_packages where id = ? and contest_id = ? and is_active = 1", (package_id, CONTEST_ID)).fetchone()
+            if not package:
+                raise ValueError("Vote package not found")
+            votes = int(package["votes"])
+            amount_kobo = int(package["amount_kobo"])
+        else:
+            votes = requested_votes
+            if votes < 1:
+                raise ValueError("votes must be greater than zero")
+            amount_kobo = votes * int(contest["vote_price_kobo"])
+
+        reference = make_reference()
+        created_at = now_iso()
+        raw_payload = {
+            "manual_transfer": True,
+            "country": country,
+            "transfer_reference": transfer_reference,
+            "bank": BANK_NAME,
+            "account_name": BANK_ACCOUNT_NAME,
+            "account_number": BANK_ACCOUNT_NUMBER,
+        }
+        conn.execute(
+            "insert into payments (reference, contest_id, contestant_id, package_id, voter_name, voter_email, voter_phone, amount_kobo, votes_purchased, gateway, status, authorization_url, raw_gateway_payload, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual_transfer', 'pending', '', ?, ?)",
+            (reference, CONTEST_ID, contestant_id, package_id, voter_name, voter_email, voter_phone, amount_kobo, votes, json.dumps(raw_payload), created_at),
+        )
+    payload = payment_payload(reference)
+    payload["bankDetails"] = {"bank": BANK_NAME, "accountName": BANK_ACCOUNT_NAME, "accountNumber": BANK_ACCOUNT_NUMBER}
+    payload["message"] = "Registration submitted. Your votes will be credited after admin verifies the bank transfer."
+    return payload
 
 def ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
     columns = [row[1] for row in conn.execute(f"pragma table_info({table})").fetchall()]
@@ -668,7 +771,9 @@ def update_settings(data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
     organizer_name = str(data.get("organizerName") or data.get("organizer_name") or "").strip()
     ends_at = str(data.get("endsAt") or data.get("ends_at") or "").strip() or None
     vote_price = int(data.get("votePrice") or data.get("vote_price") or 100)
-    gateway = str(data.get("gateway") or "paystack").strip().lower()
+    gateway = str(data.get("gateway") or "manual_transfer").strip().lower().replace(" ", "_")
+    if gateway in {"bank_transfer", "manual", "manual_bank_transfer"}:
+        gateway = "manual_transfer"
     status = str(data.get("status") or "open").strip().lower()
     show_live_results = data.get("showLiveResults", data.get("show_live_results", True))
     show_live_results = 0 if show_live_results in (False, "false", "False", "0", 0) else 1
@@ -878,6 +983,10 @@ class Handler(BaseHTTPRequestHandler):
                 data, _body = read_json(self)
                 result = initialize_payment(data)
                 return json_response(self, 200, result)
+            if path == "/api/payments/manual-submit":
+                data, _body = read_json(self)
+                result = submit_manual_payment(data)
+                return json_response(self, 200, result)
             if path == "/api/payments/webhook/paystack":
                 return self.handle_paystack_webhook()
             if path == "/api/admin/login":
@@ -902,6 +1011,24 @@ class Handler(BaseHTTPRequestHandler):
                 contestant_id = urllib.parse.unquote(path.split("/")[4])
                 data, _body = read_json(self)
                 return json_response(self, 200, save_contestant_photo(contestant_id, data, admin))
+            if path.startswith("/api/admin/payments/") and path.endswith("/verify"):
+                admin = require_admin(self, {"super_admin", "client_admin"})
+                reference = urllib.parse.unquote(path.split("/")[4])
+                with connect() as conn:
+                    payment = conn.execute("select * from payments where reference = ?", (reference,)).fetchone()
+                if not payment:
+                    raise ValueError("Payment not found")
+                result = process_successful_payment(reference, {"status": "success", "reference": reference, "amount": payment["amount_kobo"], "manual_verified_by": admin["email"]})
+                with connect() as conn:
+                    audit(conn, admin["id"], "payment.manual.verify", {"reference": reference})
+                return json_response(self, 200, {"ok": True, **result, "contest": contest_payload()})
+            if path.startswith("/api/admin/payments/") and path.endswith("/reject"):
+                admin = require_admin(self, {"super_admin", "client_admin"})
+                reference = urllib.parse.unquote(path.split("/")[4])
+                with connect() as conn:
+                    conn.execute("update payments set status = 'failed', processed_at = ? where reference = ? and status = 'pending'", (now_iso(), reference))
+                    audit(conn, admin["id"], "payment.manual.reject", {"reference": reference})
+                return json_response(self, 200, {"ok": True, "contest": contest_payload()})
             return json_response(self, 404, {"error": "Not found"})
         except PermissionError as exc:
             return json_response(self, 403, {"error": str(exc)})
@@ -939,6 +1066,9 @@ class Handler(BaseHTTPRequestHandler):
         if not payment:
             return json_response(self, 404, {"error": "Payment not found"})
 
+        if payment["gateway"] == "manual_transfer":
+            return json_response(self, 200, {**payment_payload(reference), "contest": contest_payload()})
+
         if payment["status"] == "successful":
             result = process_successful_payment(reference)
             return json_response(self, 200, {**result, "contest": contest_payload()})
@@ -953,7 +1083,7 @@ class Handler(BaseHTTPRequestHandler):
                 "createdAt": payment["created_at"],
                 "processedAt": payment["processed_at"],
                 "voter": payment["voter_name"],
-                "gateway": payment["gateway"],
+                "gateway": gateway_label(payment["gateway"]),
             })
 
         tx = verify_paystack_transaction(reference)
@@ -1039,10 +1169,12 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     init_db()
     print(f"TrevVote MVP backend running at http://{HOST}:{PORT}")
+    print(f"Payment method: {GATEWAY}")
+    print(f"Bank transfer account: {BANK_NAME} / {BANK_ACCOUNT_NAME} / {BANK_ACCOUNT_NUMBER}")
     if PAYSTACK_SECRET_KEY:
-        print("Paystack: configured")
+        print("Paystack: configured for future use")
     else:
-        print("Paystack: not configured; dev payment simulation is", "enabled" if ALLOW_DEV_PAYMENTS else "disabled")
+        print("Paystack: disabled; manual bank transfer is active")
     print(f"Database: {DB_PATH}")
     print(f"Default admin: {ADMIN_EMAIL} / {ADMIN_PASSWORD if ADMIN_PASSWORD == 'admin12345' else '[from ADMIN_PASSWORD env]'}")
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

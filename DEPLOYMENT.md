@@ -1,21 +1,24 @@
 # TrevVote Engine — GitHub Deployment Guide
 
-This repository contains a multi-page MVP website and Python backend for the paid voting platform.
+This repository contains a multi-page MVP website and Python backend for a manual bank-transfer paid voting platform.
 
 ## Important
 
-GitHub Pages can host the HTML/CSS/JS pages, but it **cannot run the Python backend**. Paystack initialization, webhooks, admin/client login, photo upload, poll image upload, and exports require the backend.
+GitHub Pages can host the HTML/CSS/JS pages, but it **cannot run the Python backend**. The backend is required for:
+
+- Transfer registration submission
+- Admin/client login
+- Manual transfer verification
+- Vote crediting
+- Photo uploads
+- Poll logo/banner upload
+- CSV/report exports
 
 Best setup:
 
 1. Push this folder to GitHub.
 2. Deploy the repo on Render, Railway, DigitalOcean, Fly.io, or a VPS.
 3. Use that backend domain as your live site.
-4. Set Paystack webhook URL to:
-
-```txt
-https://your-domain.com/api/payments/webhook/paystack
-```
 
 ## If you still want GitHub Pages for the frontend
 
@@ -43,8 +46,11 @@ http://127.0.0.1:8000
 ```txt
 HOST=0.0.0.0
 FRONTEND_URL=https://your-domain.com
-PAYSTACK_SECRET_KEY=sk_live_or_test_xxx
-ALLOW_DEV_PAYMENTS=0
+PAYMENT_GATEWAY=manual_transfer
+BANK_NAME=OPAY
+BANK_ACCOUNT_NAME=DANIEL GBENGA OLUTIMEHIN
+BANK_ACCOUNT_NUMBER=6109478874
+PAYMENT_INSTRUCTIONS=Transfer the exact package amount. Keep your receipt or transaction reference until your votes are verified.
 ADMIN_EMAIL=your-admin-email@example.com
 ADMIN_PASSWORD=use-a-strong-password
 ADMIN_ROLE=super_admin
@@ -56,12 +62,13 @@ TREVVOTE_DB=/var/data/trevvote.sqlite3
 ```txt
 GET  /api/health
 GET  /api/contest
-POST /api/payments/initialize
+POST /api/payments/manual-submit
 GET  /api/payments/verify/:reference
-POST /api/payments/webhook/paystack
 POST /api/admin/login
 POST /api/admin/logout
 GET  /api/admin/me
+POST /api/admin/payments/:reference/verify
+POST /api/admin/payments/:reference/reject
 POST /api/admin/contestants
 DELETE /api/admin/contestants/:id
 POST /api/admin/contestants/:id/photo
@@ -76,11 +83,10 @@ GET  /api/admin/reports/daily.txt
 
 ## Production checklist
 
-- Set `ALLOW_DEV_PAYMENTS=0`.
-- Never expose `PAYSTACK_SECRET_KEY` in frontend code.
+- Change default admin password.
+- Set real bank details.
 - Use HTTPS.
 - Set `FRONTEND_URL` to your deployed domain.
-- Change the default admin password.
-- Configure Paystack webhook.
 - Use PostgreSQL for serious production campaigns.
 - Configure backups.
+- Consider restricting admin/client routes by IP or adding 2FA later.
