@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contestant Profile — TrevVote Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a href="index.html" class="brand"><span class="brand-mark">TV</span><span><strong>TrevVote</strong><small>Engine</small></span></a>
+        <nav class="desktop-nav"><a href="index.html">Home</a><a class="active" href="contestants.html">Contestants</a><a href="packages.html">Packages</a><a href="leaderboard.html">Results</a><a href="admin.html">Admin</a></nav>
+        <div class="header-actions"><a class="ghost-btn" href="contestants.html">All contestants</a><a class="primary-btn small" href="packages.html">Packages</a></div>
+      </header>
+
+      <main>
+        <div id="profileContainer" class="profile-container"></div>
+      </main>
+
+      <footer class="site-footer"><div><strong>TrevVote Engine</strong><p>Contestant profile page.</p></div><div class="footer-links"><a href="contestants.html">All contestants</a><a href="leaderboard.html">Results</a><a href="admin.html">Admin</a></div></footer>
+    </div>
+
+    <div class="modal-backdrop" id="voteModal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalContestantName">
+        <button class="modal-close" id="closeVoteModal" type="button" aria-label="Close vote modal">×</button>
+        <div class="modal-grid">
+          <div class="modal-contestant" id="modalContestantCard"></div>
+          <form class="vote-form" id="voteForm">
+            <p class="eyebrow-text">Buy votes</p>
+            <h2 id="modalContestantName">Contestant</h2>
+            <p class="form-hint">Choose a package. The backend initializes Paystack and credits votes only after verification.</p>
+            <div class="modal-packages" id="modalPackages"></div>
+            <div class="custom-votes"><label><span>Or enter custom votes</span><input id="customVotes" type="number" min="1" step="1" placeholder="e.g. 250" /></label><button class="secondary-btn" type="button" id="applyCustomVotes">Apply</button></div>
+            <div class="buyer-grid">
+              <label><span>Your name</span><input id="buyerName" name="name" placeholder="Ada Okafor" autocomplete="name" /></label>
+              <label><span>Email</span><input id="buyerEmail" name="email" type="email" placeholder="ada@example.com" autocomplete="email" /></label>
+              <label><span>Phone</span><input id="buyerPhone" name="phone" type="tel" placeholder="08012345678" autocomplete="tel" /></label>
+            </div>
+            <div class="summary-box"><div><span>Votes</span><strong id="summaryVotes">0</strong></div><div><span>Amount</span><strong id="summaryAmount">₦0</strong></div><div><span>Gateway</span><strong id="summaryGateway">Paystack</strong></div></div>
+            <label class="terms-row"><input id="termsCheckbox" type="checkbox" /><span>I understand that votes are credited only after successful payment verification.</span></label>
+            <button class="primary-btn full" type="submit">Pay with Paystack</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop processing-backdrop" id="processingModal" aria-hidden="true"><div class="processing-card"><div class="loader-ring"></div><h2 id="processingTitle">Initializing secure checkout...</h2><p id="processingText">Creating payment reference.</p></div></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaderboard — TrevVote Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a href="index.html" class="brand"><span class="brand-mark">TV</span><span><strong>TrevVote</strong><small>Engine</small></span></a>
+        <nav class="desktop-nav"><a href="index.html">Home</a><a href="contestants.html">Contestants</a><a href="packages.html">Packages</a><a class="active" href="leaderboard.html">Results</a><a href="admin.html">Admin</a></nav>
+        <div class="header-actions"><button class="ghost-btn" type="button" id="demoResetBtn">Reset demo</button><a class="primary-btn small" href="contestants.html">Buy Votes</a></div>
+      </header>
+
+      <main>
+        <section class="section results-section">
+          <div class="section-heading reveal">
+            <p class="eyebrow-text">Live leaderboard</p>
+            <h2>Transparent results for organisers and voters.</h2>
+            <p>The leaderboard updates after verified payment. Organisers can choose to show or hide live results in a production version.</p>
+          </div>
+          <div class="results-layout reveal">
+            <div class="leaderboard-card"><div class="card-head"><h3>Contest rankings</h3><span id="leaderboardUpdated">Updated now</span></div><div id="leaderboardList" class="leaderboard-list"></div></div>
+            <div class="report-card">
+              <h3>Reporting snapshot</h3>
+              <p>Daily reports can include revenue, transactions, vote velocity, peak payment times and contestant growth.</p>
+              <ul><li>Total gross revenue</li><li>Vote velocity per contestant</li><li>Successful and failed payments</li><li>Peak transaction periods</li></ul>
+              <div class="report-total"><span>Total revenue</span><strong id="reportTotalRevenue">₦0</strong></div>
+              <a class="primary-btn full" href="admin.html">Open admin reports</a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><div><strong>TrevVote Engine</strong><p>Results page.</p></div><div class="footer-links"><a href="contestants.html">Vote</a><a href="packages.html">Packages</a><a href="admin.html">Admin</a></div></footer>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -368,6 +368,12 @@ def process_successful_payment(reference: str, gateway_payload: dict[str, Any] |
                 "contestant": contestant["name"] if contestant else None,
                 "votes": payment["votes_purchased"],
                 "amount": ngn_from_kobo(payment["amount_kobo"]),
+                "createdAt": payment["created_at"],
+                "processedAt": payment["processed_at"],
+                "voter": payment["voter_name"],
+                "email": payment["voter_email"],
+                "phone": payment["voter_phone"],
+                "gateway": payment["gateway"],
             }
 
         gateway_amount = int(gateway_payload.get("amount") or payment["amount_kobo"])
@@ -398,6 +404,12 @@ def process_successful_payment(reference: str, gateway_payload: dict[str, Any] |
             "contestant": contestant["name"] if contestant else None,
             "votes": payment["votes_purchased"],
             "amount": ngn_from_kobo(payment["amount_kobo"]),
+            "createdAt": payment["created_at"],
+            "processedAt": processed_at,
+            "voter": payment["voter_name"],
+            "email": payment["voter_email"],
+            "phone": payment["voter_phone"],
+            "gateway": payment["gateway"],
         }
 
 
@@ -568,6 +580,15 @@ def csv_response(handler: BaseHTTPRequestHandler, filename: str, rows: list[dict
     handler.end_headers()
     handler.wfile.write(body)
 
+def text_response(handler: BaseHTTPRequestHandler, filename: str, content: str) -> None:
+    body = content.encode("utf-8")
+    handler.send_response(200)
+    handler.send_header("Content-Type", "text/plain; charset=utf-8")
+    handler.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    handler.wfile.write(body)
+
 
 def admin_login(data: dict[str, Any]) -> dict[str, Any]:
     email = str(data.get("email") or "").strip().lower()
@@ -634,16 +655,18 @@ def update_settings(data: dict[str, Any], admin: sqlite3.Row) -> dict[str, Any]:
     vote_price = int(data.get("votePrice") or data.get("vote_price") or 100)
     gateway = str(data.get("gateway") or "paystack").strip().lower()
     status = str(data.get("status") or "open").strip().lower()
+    show_live_results = data.get("showLiveResults", data.get("show_live_results", True))
+    show_live_results = 0 if show_live_results in (False, "false", "False", "0", 0) else 1
     if vote_price < 50:
         raise ValueError("Vote price must be at least ₦50")
     if status not in {"draft", "open", "paused", "closed"}:
         raise ValueError("Invalid contest status")
     with connect() as conn:
         conn.execute(
-            "update contests set title = ?, vote_price_kobo = ?, gateway = ?, status = ? where id = ?",
-            (title, vote_price * 100, gateway, status, CONTEST_ID),
+            "update contests set title = ?, vote_price_kobo = ?, gateway = ?, status = ?, show_live_results = ? where id = ?",
+            (title, vote_price * 100, gateway, status, show_live_results, CONTEST_ID),
         )
-        audit(conn, admin["id"], "contest.settings.update", {"title": title, "votePrice": vote_price, "gateway": gateway, "status": status})
+        audit(conn, admin["id"], "contest.settings.update", {"title": title, "votePrice": vote_price, "gateway": gateway, "status": status, "showLiveResults": bool(show_live_results)})
     return {"ok": True, "contest": contest_payload()}
 
 
@@ -697,6 +720,25 @@ def report_summary() -> dict[str, Any]:
         "votesSold": total_votes,
         "topContestant": {"name": top["name"], "votes": top["vote_count"]} if top else None,
     }
+
+def daily_report_text() -> str:
+    with connect() as conn:
+        contest = conn.execute("select * from contests where id = ?", (CONTEST_ID,)).fetchone()
+        successful = conn.execute("select coalesce(sum(amount_kobo),0), coalesce(sum(votes_purchased),0), count(*) from payments where contest_id = ? and status = 'successful'", (CONTEST_ID,)).fetchone()
+        failed = conn.execute("select count(*) from payments where contest_id = ? and status in ('failed', 'abandoned')", (CONTEST_ID,)).fetchone()[0]
+        top = conn.execute("select name, code, vote_count from contestants where contest_id = ? and is_active = 1 order by vote_count desc limit 5", (CONTEST_ID,)).fetchall()
+    lines = [
+        f"{contest['title']} - Daily Voting Report",
+        f"Date: {now_iso()}",
+        f"Total revenue: NGN {ngn_from_kobo(successful[0]):,}",
+        f"Total votes: {successful[1]:,}",
+        f"Successful transactions: {successful[2]:,}",
+        f"Failed payments: {failed:,}",
+        "",
+        "Top contestants:",
+    ]
+    lines.extend([f"{idx}. {row['name']} ({row['code']}) - {row['vote_count']:,} votes" for idx, row in enumerate(top, start=1)])
+    return "\n".join(lines) + "\n"
 
 
 def export_payments_rows() -> list[dict[str, Any]]:
@@ -778,6 +820,9 @@ class Handler(BaseHTTPRequestHandler):
                 require_admin(self, {"super_admin", "client_admin", "viewer"})
                 rows = export_contestants_rows()
                 return csv_response(self, "trevvote-contestants.csv", rows, ["code", "name", "category", "region", "vote_count", "photo_url", "is_active"])
+            if path == "/api/admin/reports/daily.txt":
+                require_admin(self, {"super_admin", "client_admin", "viewer"})
+                return text_response(self, "trevvote-daily-report.txt", daily_report_text())
             if path.startswith("/api/payments/verify/"):
                 reference = urllib.parse.unquote(path.rsplit("/", 1)[-1])
                 return self.handle_verify(reference)
@@ -857,7 +902,17 @@ class Handler(BaseHTTPRequestHandler):
             return json_response(self, 200, {**result, "contest": contest_payload()})
 
         if not PAYSTACK_SECRET_KEY:
-            return json_response(self, 200, {"reference": reference, "status": payment["status"], "dev_mode": True})
+            return json_response(self, 200, {
+                "reference": reference,
+                "status": payment["status"],
+                "dev_mode": True,
+                "votes": payment["votes_purchased"],
+                "amount": ngn_from_kobo(payment["amount_kobo"]),
+                "createdAt": payment["created_at"],
+                "processedAt": payment["processed_at"],
+                "voter": payment["voter_name"],
+                "gateway": payment["gateway"],
+            })
 
         tx = verify_paystack_transaction(reference)
         if tx.get("status") == "success":

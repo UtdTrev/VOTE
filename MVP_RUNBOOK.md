@@ -164,3 +164,71 @@ The frontend admin panel now has export buttons after login.
 2. Switch SQLite to PostgreSQL for production.
 3. Add multi-client/multi-contest super-admin screens.
 4. Add automated daily reports by email or WhatsApp.
+
+## Shareable contestant profile pages
+
+Added page:
+
+```txt
+contestant.html?id=c001
+```
+
+Each profile shows:
+
+- Larger contestant visual/photo
+- Bio
+- Current rank
+- Voting code
+- Total votes
+- Vote button
+- WhatsApp share button
+- Copy profile link button
+
+## WhatsApp share links
+
+Contestant cards and profile pages now generate share links like:
+
+```txt
+Vote for Adaeze Nwosu (CI-001) here: https://yourdomain.com/contestant.html?id=c001
+```
+
+## Hidden leaderboard option
+
+Admin settings now include:
+
+```txt
+Show live results: Yes/No
+```
+
+If hidden, the public leaderboard shows a message instead of rankings:
+
+```txt
+Your vote has been counted. The organiser has chosen to hide public rankings until results are announced.
+```
+
+The backend stores this as `show_live_results` on the contest.
+
+## Payment receipt improvements
+
+`payment-success.html` now displays:
+
+```txt
+Reference
+Status
+Contestant
+Votes purchased
+Amount paid
+Date/time
+Voter
+Gateway
+```
+
+## Daily report text
+
+Added endpoint:
+
+```txt
+GET /api/admin/reports/daily.txt
+```
+
+The admin payments tab also shows a daily report preview that can be copied or opened in WhatsApp.

@@ -4,355 +4,87 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TrevVote Engine — Paid Voting Platform</title>
-    <meta
-      name="description"
-      content="A white-label paid voting website prototype with contestant voting, packages, payment simulation, dashboard, and Paystack-ready backend logic."
-    />
+    <meta name="description" content="White-label paid voting platform with Paystack-ready payments, admin dashboard, contestant uploads, and reporting exports." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="site-header" id="top">
-        <a href="#top" class="brand" aria-label="TrevVote Engine home">
+        <a href="index.html" class="brand" aria-label="TrevVote Engine home">
           <span class="brand-mark">TV</span>
-          <span>
-            <strong>TrevVote</strong>
-            <small>Engine</small>
-          </span>
+          <span><strong>TrevVote</strong><small>Engine</small></span>
         </a>
-
         <nav class="desktop-nav" aria-label="Main navigation">
-          <a href="#contestants">Contestants</a>
-          <a href="#packages">Packages</a>
-          <a href="#results">Results</a>
-          <a href="#admin">Admin</a>
+          <a class="active" href="index.html">Home</a>
+          <a href="contestants.html">Contestants</a>
+          <a href="packages.html">Packages</a>
+          <a href="leaderboard.html">Results</a>
+          <a href="admin.html">Admin</a>
         </nav>
-
         <div class="header-actions">
           <button class="ghost-btn" type="button" id="demoResetBtn">Reset demo</button>
-          <a class="primary-btn small" href="#contestants">Buy Votes</a>
+          <a class="primary-btn small" href="contestants.html">Buy Votes</a>
         </div>
       </header>
 
       <main>
         <section class="hero-section">
           <div class="hero-copy reveal">
-            <div class="eyebrow">
-              <span class="pulse-dot"></span>
-              000 / White-label paid voting
-            </div>
+            <div class="eyebrow"><span class="pulse-dot"></span> 000 / White-label paid voting</div>
             <h1>Voting becomes revenue.</h1>
-            <p>
-              Pick a contestant. Buy votes. Verify payment. Update the leaderboard. A reusable paid voting engine for awards, pageants, creators, schools, and campaign organisers.
-            </p>
+            <p>Pick a contestant. Buy votes. Verify payment. Update the leaderboard. A reusable paid voting engine for awards, pageants, creators, schools, and campaign organisers.</p>
             <div class="hero-ctas">
-              <a class="primary-btn" href="#contestants">Launch voting demo</a>
-              <a class="secondary-btn" href="#payment-flow">See payment logic</a>
+              <a class="primary-btn" href="contestants.html">View contestants</a>
+              <a class="secondary-btn" href="packages.html">See vote packages</a>
             </div>
             <div class="trust-strip" aria-label="Platform features">
-              <span>Webhook verification</span>
-              <span>Duplicate protection</span>
-              <span>Instant tally</span>
+              <span>Paystack-ready</span><span>Webhook verification</span><span>Duplicate protection</span><span>CSV exports</span>
             </div>
           </div>
 
           <aside class="hero-card reveal" aria-label="Live campaign summary">
-            <div class="hero-card-top">
-              <span class="live-pill"><span></span> Live campaign</span>
-              <button class="icon-btn" type="button" aria-label="More options">⋯</button>
-            </div>
-            <div>
-              <p class="muted-label">Current contest</p>
-              <h2>Campus Icons Awards 2026</h2>
-            </div>
+            <div class="hero-card-top"><span class="live-pill"><span></span> Live campaign</span><a class="icon-btn" href="leaderboard.html" aria-label="View leaderboard">→</a></div>
+            <div><p class="muted-label">Current contest</p><h2>Campus Icons Awards 2026</h2></div>
             <div class="mini-metrics">
-              <div>
-                <span id="heroTotalRevenue">₦0</span>
-                <small>Revenue</small>
-              </div>
-              <div>
-                <span id="heroTotalVotes">0</span>
-                <small>Paid votes</small>
-              </div>
-              <div>
-                <span id="heroTxCount">0</span>
-                <small>Transactions</small>
-              </div>
+              <div><span id="heroTotalRevenue">₦0</span><small>Revenue</small></div>
+              <div><span id="heroTotalVotes">0</span><small>Paid votes</small></div>
+              <div><span id="heroTxCount">0</span><small>Transactions</small></div>
             </div>
             <div class="leader-card" id="heroLeaderCard"></div>
-            <div class="deadline-box">
-              <div>
-                <small>Voting closes</small>
-                <strong>31 Aug 2026, 11:59 PM</strong>
-              </div>
-              <span id="contestStatusBadge">Open</span>
-            </div>
+            <div class="deadline-box"><div><small>Voting closes</small><strong>31 Aug 2026, 11:59 PM</strong></div><span id="contestStatusBadge">Open</span></div>
           </aside>
         </section>
 
         <section class="section metrics-section reveal" aria-label="Business metrics">
-          <div class="metric-card">
-            <small>Unit price</small>
-            <strong>₦100</strong>
-            <span>per vote</span>
-          </div>
-          <div class="metric-card">
-            <small>Client deployment</small>
-            <strong>1 core</strong>
-            <span>many branded contests</span>
-          </div>
-          <div class="metric-card">
-            <small>Recommended model</small>
-            <strong>Setup + %</strong>
-            <span>earn on every campaign</span>
-          </div>
-          <div class="metric-card">
-            <small>Gateway</small>
-            <strong>Paystack</strong>
-            <span>Flutterwave can be added</span>
-          </div>
+          <div class="metric-card"><small>Unit price</small><strong>₦100</strong><span>per vote</span></div>
+          <div class="metric-card"><small>Client deployment</small><strong>1 core</strong><span>many branded contests</span></div>
+          <div class="metric-card"><small>Model</small><strong>Setup + %</strong><span>earn per campaign</span></div>
+          <div class="metric-card"><small>Gateway</small><strong>Paystack</strong><span>same Trev AI payment style</span></div>
         </section>
 
-        <section class="section split-section" id="payment-flow">
+        <section class="section split-section">
           <div class="section-heading reveal">
             <p class="eyebrow-text">But what is it actually?</p>
             <h2>A voting engine with payments built in.</h2>
-            <p>
-              The site sells votes like a product catalogue, but the backend behaves like a payment system: initialize, verify, credit once, report instantly.
-            </p>
+            <p>The site sells votes like a product catalogue, but the backend behaves like a payment system: initialize, verify, credit once, report instantly.</p>
           </div>
           <div class="flow-grid reveal">
-            <article>
-              <span>01</span>
-              <h3>Select contestant</h3>
-              <p>User picks a nominee and vote package. Amount is calculated on the backend.</p>
-            </article>
-            <article>
-              <span>02</span>
-              <h3>Initialize payment</h3>
-              <p>Backend creates a unique reference and sends the user to Paystack checkout.</p>
-            </article>
-            <article>
-              <span>03</span>
-              <h3>Verify webhook</h3>
-              <p>Webhook signature and transaction status are verified before crediting votes.</p>
-            </article>
-            <article>
-              <span>04</span>
-              <h3>Credit tally</h3>
-              <p>Votes are added once using idempotency, then reports and rankings update.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="section" id="packages">
-          <div class="section-heading centered reveal">
-            <p class="eyebrow-text">Vote packages</p>
-            <h2>Designed to increase average order value.</h2>
-            <p>Packages keep the ₦100-per-vote idea but encourage larger transactions.</p>
-          </div>
-          <div class="package-grid reveal" id="packageGrid"></div>
-        </section>
-
-        <section class="section contestants-section" id="contestants">
-          <div class="section-heading reveal">
-            <p class="eyebrow-text">Contestants</p>
-            <h2>Pick a contestant and buy verified votes.</h2>
-            <p>Search, filter, and vote. The demo payment button simulates a successful Paystack webhook.</p>
-          </div>
-
-          <div class="toolbar reveal">
-            <label class="search-box">
-              <span>Search</span>
-              <input id="searchInput" type="search" placeholder="Search contestant, code, category..." />
-            </label>
-            <label class="filter-box">
-              <span>Category</span>
-              <select id="categoryFilter">
-                <option value="all">All categories</option>
-              </select>
-            </label>
-            <label class="filter-box">
-              <span>Sort</span>
-              <select id="sortFilter">
-                <option value="rank">Highest votes</option>
-                <option value="name">Name A-Z</option>
-                <option value="recent">Recently added</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="contestant-grid reveal" id="contestantGrid"></div>
-        </section>
-
-        <section class="section results-section" id="results">
-          <div class="section-heading reveal">
-            <p class="eyebrow-text">Live leaderboard</p>
-            <h2>Transparent results for organizers and voters.</h2>
-            <p>The leaderboard updates instantly after every verified payment.</p>
-          </div>
-          <div class="results-layout reveal">
-            <div class="leaderboard-card">
-              <div class="card-head">
-                <h3>Contest rankings</h3>
-                <span id="leaderboardUpdated">Updated now</span>
-              </div>
-              <div id="leaderboardList" class="leaderboard-list"></div>
-            </div>
-            <div class="report-card">
-              <h3>Organizer reporting</h3>
-              <p>Daily reporting can be sent by email, dashboard, Google Sheets, or WhatsApp.</p>
-              <ul>
-                <li>Total gross revenue</li>
-                <li>Vote velocity per contestant</li>
-                <li>Successful and failed payments</li>
-                <li>Peak transaction periods</li>
-              </ul>
-              <div class="report-total">
-                <span>Total revenue</span>
-                <strong id="reportTotalRevenue">₦0</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section admin-section" id="admin">
-          <div class="section-heading reveal">
-            <p class="eyebrow-text">Control panel</p>
-            <h2>Admin dashboard for day-to-day campaign control.</h2>
-            <p>This demo dashboard uses browser storage. In production it connects to Django/FastAPI + PostgreSQL.</p>
-          </div>
-
-          <div class="admin-auth-card reveal" id="adminAuthCard"></div>
-
-          <div class="admin-grid reveal">
-            <aside class="admin-sidebar">
-              <button class="admin-tab active" data-tab="overview" type="button">Overview</button>
-              <button class="admin-tab" data-tab="contestants" type="button">Contestants</button>
-              <button class="admin-tab" data-tab="payments" type="button">Payments</button>
-              <button class="admin-tab" data-tab="settings" type="button">Settings</button>
-            </aside>
-
-            <div class="admin-panel">
-              <div class="admin-pane active" id="admin-overview">
-                <div class="dashboard-cards">
-                  <div><small>Revenue</small><strong id="adminRevenue">₦0</strong></div>
-                  <div><small>Votes sold</small><strong id="adminVotes">0</strong></div>
-                  <div><small>Transactions</small><strong id="adminTransactions">0</strong></div>
-                  <div><small>Top contestant</small><strong id="adminTopContestant">—</strong></div>
-                </div>
-                <div class="chart-card">
-                  <div class="card-head"><h3>Vote distribution</h3><span>Live</span></div>
-                  <div id="voteBars" class="vote-bars"></div>
-                </div>
-              </div>
-
-              <div class="admin-pane" id="admin-contestants">
-                <div class="form-card">
-                  <h3>Add contestant</h3>
-                  <div class="admin-form">
-                    <input id="newContestantName" placeholder="Contestant name" />
-                    <input id="newContestantCode" placeholder="Voting code e.g. CI-007" />
-                    <input id="newContestantCategory" placeholder="Category e.g. Music" />
-                    <input id="newContestantRegion" placeholder="Region/School" />
-                    <input id="newContestantBio" placeholder="Short bio" />
-                    <button class="primary-btn" id="addContestantBtn" type="button">Add contestant</button>
-                  </div>
-                </div>
-                <div class="table-card">
-                  <div class="card-head"><h3>Current contestants</h3><span id="contestantCount">0</span></div>
-                  <div class="table-wrap">
-                    <table>
-                      <thead><tr><th>Name</th><th>Code</th><th>Category</th><th>Votes</th><th>Photo</th><th></th></tr></thead>
-                      <tbody id="adminContestantRows"></tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <div class="admin-pane" id="admin-payments">
-                <div class="table-card">
-                  <div class="card-head"><h3>Recent payments</h3><span>Verified only</span></div>
-                  <div class="table-wrap">
-                    <table>
-                      <thead><tr><th>Reference</th><th>Voter</th><th>Contestant</th><th>Votes</th><th>Amount</th><th>Status</th></tr></thead>
-                      <tbody id="paymentRows"></tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <div class="admin-pane" id="admin-settings">
-                <div class="settings-grid">
-                  <label><span>Campaign title</span><input id="settingTitle" value="Campus Icons Awards 2026" /></label>
-                  <label><span>Vote price</span><input id="settingVotePrice" type="number" min="50" step="50" value="100" /></label>
-                  <label><span>Payment gateway</span><select id="settingGateway"><option>Paystack</option><option>Flutterwave</option><option>Monnify</option></select></label>
-                  <label><span>Voting status</span><select id="settingStatus"><option value="open">Open</option><option value="paused">Paused</option><option value="closed">Closed</option></select></label>
-                </div>
-                <button class="primary-btn" id="saveSettingsBtn" type="button">Save settings</button>
-                <p class="admin-note">Production version should protect this dashboard with login, roles, audit logs, and server-side validation.</p>
-              </div>
-            </div>
+            <article><span>01</span><h3>Select contestant</h3><p>Supporters browse the contestant catalogue and pick who they want to support.</p></article>
+            <article><span>02</span><h3>Choose package</h3><p>They buy a fixed vote bundle or enter a custom number of votes.</p></article>
+            <article><span>03</span><h3>Pay securely</h3><p>The backend initializes Paystack checkout with a unique reference.</p></article>
+            <article><span>04</span><h3>Credit votes</h3><p>Webhook verification confirms payment before votes are added once.</p></article>
           </div>
         </section>
       </main>
 
-      <footer class="site-footer">
-        <div><strong>TrevVote Engine</strong><p>White-label paid voting platform prototype.</p></div>
-        <div class="footer-links">
-          <a href="README.md">README</a>
-          <a href="backend/paystack_fastapi_example.py">Backend example</a>
-          <a href="#top">Back to top</a>
-        </div>
-      </footer>
-    </div>
-
-    <div class="modal-backdrop" id="voteModal" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalContestantName">
-        <button class="modal-close" id="closeVoteModal" type="button" aria-label="Close vote modal">×</button>
-        <div class="modal-grid">
-          <div class="modal-contestant" id="modalContestantCard"></div>
-          <form class="vote-form" id="voteForm">
-            <p class="eyebrow-text">Buy votes</p>
-            <h2 id="modalContestantName">Contestant</h2>
-            <p class="form-hint">Choose a package. In production this button redirects to a real Paystack checkout.</p>
-            <div class="modal-packages" id="modalPackages"></div>
-            <div class="custom-votes">
-              <label><span>Or enter custom votes</span><input id="customVotes" type="number" min="1" step="1" placeholder="e.g. 250" /></label>
-              <button class="secondary-btn" type="button" id="applyCustomVotes">Apply</button>
-            </div>
-            <div class="buyer-grid">
-              <label><span>Your name</span><input id="buyerName" name="name" placeholder="Ada Okafor" autocomplete="name" /></label>
-              <label><span>Email</span><input id="buyerEmail" name="email" type="email" placeholder="ada@example.com" autocomplete="email" /></label>
-              <label><span>Phone</span><input id="buyerPhone" name="phone" type="tel" placeholder="08012345678" autocomplete="tel" /></label>
-            </div>
-            <div class="summary-box">
-              <div><span>Votes</span><strong id="summaryVotes">0</strong></div>
-              <div><span>Amount</span><strong id="summaryAmount">₦0</strong></div>
-              <div><span>Gateway</span><strong id="summaryGateway">Paystack</strong></div>
-            </div>
-            <label class="terms-row"><input id="termsCheckbox" type="checkbox" /><span>I understand that votes are credited only after successful payment verification.</span></label>
-            <button class="primary-btn full" type="submit" id="payNowBtn">Pay with Paystack — Demo</button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-backdrop processing-backdrop" id="processingModal" aria-hidden="true">
-      <div class="processing-card">
-        <div class="loader-ring"></div>
-        <h2 id="processingTitle">Initializing secure checkout...</h2>
-        <p id="processingText">Creating payment reference.</p>
-      </div>
+      <footer class="site-footer"><div><strong>TrevVote Engine</strong><p>White-label paid voting platform MVP.</p></div><div class="footer-links"><a href="DEPLOYMENT.md">Deploy</a><a href="MVP_RUNBOOK.md">Runbook</a><a href="admin.html">Admin</a></div></footer>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

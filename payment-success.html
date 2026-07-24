@@ -73,16 +73,21 @@
           <div><span>Reference</span><strong id="reference">—</strong></div>
           <div><span>Status</span><strong id="status">Checking</strong></div>
           <div><span>Contestant</span><strong id="contestant">—</strong></div>
-          <div><span>Votes</span><strong id="votes">—</strong></div>
-          <div><span>Amount</span><strong id="amount">—</strong></div>
+          <div><span>Votes purchased</span><strong id="votes">—</strong></div>
+          <div><span>Amount paid</span><strong id="amount">—</strong></div>
+          <div><span>Date/time</span><strong id="dateTime">—</strong></div>
+          <div><span>Voter</span><strong id="voter">—</strong></div>
+          <div><span>Gateway</span><strong id="gateway">—</strong></div>
         </div>
         <div class="success-actions">
-          <a class="primary-btn" href="/">Back to leaderboard</a>
+          <a class="primary-btn" href="leaderboard.html">Back to leaderboard</a>
+          <a class="secondary-btn" href="contestants.html">Vote again</a>
           <button class="secondary-btn" type="button" id="retryBtn">Verify again</button>
         </div>
       </section>
     </main>
 
+    <script src="config.js"></script>
     <script>
       const API_BASE = window.TREV_VOTE_API_BASE || window.location.origin || "http://127.0.0.1:8000";
       const params = new URLSearchParams(window.location.search);
@@ -115,6 +120,10 @@
           document.getElementById("contestant").textContent = result.contestant || "—";
           document.getElementById("votes").textContent = result.votes ? new Intl.NumberFormat("en-NG").format(result.votes) : "—";
           document.getElementById("amount").textContent = result.amount ? formatter.format(result.amount) : "—";
+          const dateValue = result.processedAt || result.createdAt;
+          document.getElementById("dateTime").textContent = dateValue ? new Date(dateValue).toLocaleString("en-NG") : "—";
+          document.getElementById("voter").textContent = result.voter || "—";
+          document.getElementById("gateway").textContent = result.gateway || "Paystack";
         } catch (error) {
           document.getElementById("title").textContent = "Verification failed";
           document.getElementById("message").textContent = error.message;

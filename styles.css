@@ -566,3 +566,175 @@ td strong { color: var(--ink); }
 .admin-form { grid-template-columns: repeat(5, 1fr) auto; }
 @media (max-width: 1120px) { .admin-form { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) { .admin-form { grid-template-columns: 1fr; } }
+.desktop-nav a.active { background: var(--ink); color: var(--bg); }
+
+/* Profile/share/hidden-results/report improvements */
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.card-actions .primary-btn,
+.card-actions .secondary-btn,
+.card-actions .ghost-btn {
+  width: 100%;
+  min-height: 42px;
+  padding-inline: 12px;
+  font-size: .82rem;
+}
+.profile-container {
+  padding: 72px 0 88px;
+}
+.profile-hero {
+  display: grid;
+  grid-template-columns: minmax(320px, .82fr) 1fr;
+  gap: 28px;
+  align-items: stretch;
+}
+.profile-visual {
+  min-height: 620px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 20% 15%, rgba(255,255,255,.35), transparent 12rem), var(--contestant-gradient);
+  border: 1px solid var(--ink);
+  border-radius: 28px;
+  overflow: hidden;
+}
+.profile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-initials {
+  display: grid;
+  place-items: center;
+  width: min(58%, 320px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.55);
+  background: rgba(255,255,255,.16);
+  color: #fff;
+  font-size: clamp(5rem, 10vw, 9rem);
+  font-weight: 900;
+  letter-spacing: -.1em;
+}
+.profile-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(255,250,244,.34);
+  padding: clamp(24px, 4vw, 54px);
+}
+.profile-copy h1 {
+  margin: 0;
+  font-size: clamp(4rem, 9vw, 9rem);
+  line-height: .76;
+  letter-spacing: -.11em;
+  text-transform: uppercase;
+}
+.profile-copy p {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 24px 0;
+}
+.profile-stats div,
+.hidden-results-card,
+.role-card {
+  border: 1px solid var(--line);
+  background: rgba(255,250,244,.42);
+  border-radius: 16px;
+  padding: 16px;
+}
+.profile-stats span {
+  display: block;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.profile-stats strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.35rem;
+  letter-spacing: -.055em;
+}
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.hidden-results-card {
+  padding: 34px;
+  text-align: center;
+}
+.hidden-results-card h3 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: .85;
+  letter-spacing: -.09em;
+  text-transform: uppercase;
+}
+.hidden-results-card p {
+  max-width: 620px;
+  margin: 0 auto;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.role-matrix {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: -8px 0 18px;
+}
+.role-card strong,
+.role-card span {
+  display: block;
+}
+.role-card strong {
+  font-size: 1.1rem;
+  letter-spacing: -.04em;
+}
+.role-card span {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: .9rem;
+}
+.role-card.active {
+  background: var(--green);
+  border-color: var(--ink);
+}
+.report-textarea {
+  width: 100%;
+  min-height: 250px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  color: var(--ink);
+  background: rgba(255,250,244,.42);
+  font: 700 .95rem/1.55 "Inter", sans-serif;
+}
+@media (min-width: 700px) {
+  .card-actions { grid-template-columns: 1fr 1fr; }
+  .card-actions .ghost-btn { grid-column: 1 / -1; }
+}
+@media (max-width: 960px) {
+  .profile-hero,
+  .role-matrix { grid-template-columns: 1fr; }
+  .profile-visual { min-height: 420px; }
+}
+@media (max-width: 640px) {
+  .profile-stats { grid-template-columns: 1fr; }
+  .profile-actions { display: grid; grid-template-columns: 1fr; }
+}

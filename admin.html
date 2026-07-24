@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — TrevVote Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a href="index.html" class="brand"><span class="brand-mark">TV</span><span><strong>TrevVote</strong><small>Engine</small></span></a>
+        <nav class="desktop-nav"><a href="index.html">Home</a><a href="contestants.html">Contestants</a><a href="packages.html">Packages</a><a href="leaderboard.html">Results</a><a class="active" href="admin.html">Admin</a></nav>
+        <div class="header-actions"><a class="primary-btn small" href="contestants.html">Public site</a></div>
+      </header>
+
+      <main>
+        <section class="section admin-section">
+          <div class="section-heading reveal">
+            <p class="eyebrow-text">Control panel</p>
+            <h2>Admin dashboard for campaign control.</h2>
+            <p>Login to manage contestants, upload photos, set voting status, and export payment or contestant reports.</p>
+          </div>
+
+          <div class="admin-auth-card reveal" id="adminAuthCard"></div>
+
+          <div class="role-matrix reveal" id="roleMatrix"></div>
+
+          <div class="admin-grid reveal">
+            <aside class="admin-sidebar">
+              <button class="admin-tab active" data-tab="overview" type="button">Overview</button>
+              <button class="admin-tab" data-tab="contestants" type="button">Contestants</button>
+              <button class="admin-tab" data-tab="payments" type="button">Payments</button>
+              <button class="admin-tab" data-tab="settings" type="button">Settings</button>
+            </aside>
+
+            <div class="admin-panel">
+              <div class="admin-pane active" id="admin-overview">
+                <div class="dashboard-cards">
+                  <div><small>Revenue</small><strong id="adminRevenue">₦0</strong></div>
+                  <div><small>Votes sold</small><strong id="adminVotes">0</strong></div>
+                  <div><small>Transactions</small><strong id="adminTransactions">0</strong></div>
+                  <div><small>Top contestant</small><strong id="adminTopContestant">—</strong></div>
+                </div>
+                <div class="chart-card"><div class="card-head"><h3>Vote distribution</h3><span>Live</span></div><div id="voteBars" class="vote-bars"></div></div>
+              </div>
+
+              <div class="admin-pane" id="admin-contestants">
+                <div class="form-card">
+                  <h3>Add contestant</h3>
+                  <div class="admin-form">
+                    <input id="newContestantName" placeholder="Contestant name" />
+                    <input id="newContestantCode" placeholder="Voting code e.g. CI-007" />
+                    <input id="newContestantCategory" placeholder="Category e.g. Music" />
+                    <input id="newContestantRegion" placeholder="Region/School" />
+                    <input id="newContestantBio" placeholder="Short bio" />
+                    <button class="primary-btn" id="addContestantBtn" type="button">Add contestant</button>
+                  </div>
+                </div>
+                <div class="table-card">
+                  <div class="card-head"><h3>Current contestants</h3><span id="contestantCount">0</span></div>
+                  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Category</th><th>Votes</th><th>Photo</th><th></th></tr></thead><tbody id="adminContestantRows"></tbody></table></div>
+                </div>
+              </div>
+
+              <div class="admin-pane" id="admin-payments">
+                <div class="table-card">
+                  <div class="card-head"><h3>Recent payments</h3><span>Verified only</span></div>
+                  <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Voter</th><th>Contestant</th><th>Votes</th><th>Amount</th><th>Status</th></tr></thead><tbody id="paymentRows"></tbody></table></div>
+                </div>
+                <div class="table-card">
+                  <div class="card-head"><h3>Daily report preview</h3><span>Email/WhatsApp ready</span></div>
+                  <textarea id="dailyReportText" class="report-textarea" readonly></textarea>
+                  <div class="admin-auth-actions" style="margin-top:12px">
+                    <button class="secondary-btn" type="button" id="copyDailyReportBtn">Copy report</button>
+                    <button class="secondary-btn" type="button" id="whatsappDailyReportBtn">Send via WhatsApp</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-pane" id="admin-settings">
+                <div class="settings-grid">
+                  <label><span>Campaign title</span><input id="settingTitle" value="Campus Icons Awards 2026" /></label>
+                  <label><span>Vote price</span><input id="settingVotePrice" type="number" min="50" step="50" value="100" /></label>
+                  <label><span>Payment gateway</span><select id="settingGateway"><option>Paystack</option><option>Flutterwave</option><option>Monnify</option></select></label>
+                  <label><span>Voting status</span><select id="settingStatus"><option value="open">Open</option><option value="paused">Paused</option><option value="closed">Closed</option></select></label>
+                  <label><span>Show live results</span><select id="settingShowResults"><option value="true">Yes, show leaderboard</option><option value="false">No, hide leaderboard</option></select></label>
+                </div>
+                <button class="primary-btn" id="saveSettingsBtn" type="button">Save settings</button>
+                <p class="admin-note">Production version should use strong admin passwords, HTTPS, database backups, and PostgreSQL.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><div><strong>TrevVote Engine</strong><p>Admin dashboard.</p></div><div class="footer-links"><a href="contestants.html">Public vote page</a><a href="leaderboard.html">Results</a><a href="DEPLOYMENT.md">Deploy</a></div></footer>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
