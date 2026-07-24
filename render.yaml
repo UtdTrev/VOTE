@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: trevvote-engine
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python backend/server.py"
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: ALLOW_DEV_PAYMENTS
+        value: 0
+      - key: PAYMENT_GATEWAY
+        value: paystack
+      - key: FRONTEND_URL
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_ROLE
+        value: super_admin
+      - key: TREVVOTE_DB
+        value: /var/data/trevvote.sqlite3
+    disk:
+      name: trevvote-data
+      mountPath: /var/data
+      sizeGB: 1

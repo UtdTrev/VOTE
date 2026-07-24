@@ -1,0 +1,2 @@
+# No external Python packages are required for the current MVP backend.
+# The backend uses Python standard library only.
